@@ -1,2 +1,2 @@
 # dot-files
-home of the rice 
+home of the ricee
