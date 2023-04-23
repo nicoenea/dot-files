@@ -1,0 +1,23 @@
+[Data Source]
+DisplayName=nicolasenea17@gmail.com
+Enabled=true
+Parent=fc55af888db7d8c6739916f8653a173bd73585d1
+
+[Authentication]
+Host=smtp.gmail.com
+Method=XOAUTH2
+Port=465
+ProxyUid=system-proxy
+RememberPassword=true
+User=nicolasenea17@gmail.com
+CredentialName=
+IsExternal=false
+
+[Security]
+Method=ssl-on-alternate-port
+
+[Mail Transport]
+BackendName=smtp
+
+[Smtp Backend]
+ReencodeData=false

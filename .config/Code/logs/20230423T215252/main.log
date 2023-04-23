@@ -1,0 +1,14 @@
+2023-04-23 21:52:52.840 [info] [SharedProcess] using utility process
+2023-04-23 21:52:52.871 [info] update#setState idle
+2023-04-23 21:52:53.268 [info] [UtilityProcess type: shared-process, pid: <none>]: creating new...
+2023-04-23 21:52:53.272 [info] [UtilityProcess id: 1, type: fileWatcher, pid: <none>]: creating new...
+2023-04-23 21:52:53.276 [info] [UtilityProcess type: shared-process, pid: 23354]: successfully created
+2023-04-23 21:52:53.276 [info] [UtilityProcess id: 1, type: fileWatcher, pid: 23355]: successfully created
+2023-04-23 21:52:53.306 [info] [UtilityProcess id: 1, type: extensionHost, pid: <none>]: creating new...
+2023-04-23 21:52:53.311 [info] [UtilityProcess id: 1, type: extensionHost, pid: 23375]: successfully created
+2023-04-23 21:53:22.871 [info] update#setState checking for updates
+2023-04-23 21:53:22.932 [info] update#setState idle
+2023-04-23 21:53:25.579 [info] [UtilityProcess type: shared-process, pid: 23354]: received exit event with code 0
+2023-04-23 21:53:25.579 [info] [UtilityProcess id: 1, type: fileWatcher, pid: 23355]: received exit event with code 0
+2023-04-23 21:53:25.579 [info] [UtilityProcess id: 1, type: extensionHost, pid: 23375]: received exit event with code 0
+2023-04-23 21:53:25.579 [info] Extension host with pid 23375 exited with code: 0, signal: unknown.

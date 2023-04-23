@@ -1,0 +1,38 @@
+2023/01/28-12:57:35.117 4390 Creating DB /home/nicolasenea/.config/google-chrome/Default/IndexedDB/chrome-extension_ophjlpahpchlmihnnnihgmmeilfjmjjc_0.indexeddb.leveldb since it was missing.
+2023/01/28-12:57:35.135 4390 Reusing MANIFEST /home/nicolasenea/.config/google-chrome/Default/IndexedDB/chrome-extension_ophjlpahpchlmihnnnihgmmeilfjmjjc_0.indexeddb.leveldb/MANIFEST-000001
+2023/01/28-12:58:15.129 438e Level-0 table #5: started
+2023/01/28-12:58:15.145 438e Level-0 table #5: 1694216 bytes OK
+2023/01/28-12:58:15.166 438e Delete type=0 #3
+2023/01/28-12:58:16.674 438e Level-0 table #7: started
+2023/01/28-12:58:16.688 438e Level-0 table #7: 2454932 bytes OK
+2023/01/28-12:58:16.699 438e Delete type=0 #4
+2023/01/28-12:58:16.701 438e Compacting 1@1 + 1@2 files
+2023/01/28-12:58:16.721 438e Generated table #8@1: 8036 keys, 2151956 bytes
+2023/01/28-12:58:16.729 438e Generated table #9@1: 2170 keys, 489736 bytes
+2023/01/28-12:58:16.729 438e Compacted 1@1 + 1@2 files => 2641692 bytes
+2023/01/28-12:58:16.739 438e compacted to: files[ 0 0 2 0 0 0 0 ]
+2023/01/28-12:58:16.739 438e Delete type=2 #5
+2023/01/28-12:58:16.739 438e Delete type=2 #7
+2023/01/28-12:58:16.796 4381 Level-0 table #11: started
+2023/01/28-12:58:16.813 4381 Level-0 table #11: 1629425 bytes OK
+2023/01/28-12:58:16.823 4381 Delete type=0 #6
+2023/01/28-12:58:17.214 461d Compacting 1@1 + 2@2 files
+2023/01/28-12:58:17.235 461d Generated table #12@1: 5965 keys, 2147216 bytes
+2023/01/28-12:58:17.250 461d Generated table #13@1: 7918 keys, 1446913 bytes
+2023/01/28-12:58:17.250 461d Compacted 1@1 + 2@2 files => 3594129 bytes
+2023/01/28-12:58:17.271 461d compacted to: files[ 0 0 2 0 0 0 0 ]
+2023/01/28-12:58:17.271 461d Delete type=2 #8
+2023/01/28-12:58:17.271 461d Delete type=2 #9
+2023/01/28-12:58:17.271 461d Delete type=2 #11
+2023/01/28-14:52:22.937 941c Level-0 table #15: started
+2023/01/28-14:52:22.963 941c Level-0 table #15: 1813345 bytes OK
+2023/01/28-14:52:22.979 941c Delete type=0 #10
+2023/01/28-15:07:45.667 9fe0 Compacting 1@1 + 2@2 files
+2023/01/28-15:07:45.692 9fe0 Generated table #16@1: 7578 keys, 2180773 bytes
+2023/01/28-15:07:45.709 9fe0 Generated table #17@1: 9224 keys, 2173871 bytes
+2023/01/28-15:07:45.719 9fe0 Generated table #18@1: 2205 keys, 359843 bytes
+2023/01/28-15:07:45.719 9fe0 Compacted 1@1 + 2@2 files => 4714487 bytes
+2023/01/28-15:07:45.729 9fe0 compacted to: files[ 0 0 3 0 0 0 0 ]
+2023/01/28-15:07:45.729 9fe0 Delete type=2 #12
+2023/01/28-15:07:45.729 9fe0 Delete type=2 #13
+2023/01/28-15:07:45.729 9fe0 Delete type=2 #15

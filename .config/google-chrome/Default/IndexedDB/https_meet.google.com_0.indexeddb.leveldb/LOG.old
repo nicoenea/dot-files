@@ -1,0 +1,6 @@
+2023/01/28-14:46:06.000 941c Creating DB /home/nicolasenea/.config/google-chrome/Default/IndexedDB/https_meet.google.com_0.indexeddb.leveldb since it was missing.
+2023/01/28-14:46:06.016 941c Reusing MANIFEST /home/nicolasenea/.config/google-chrome/Default/IndexedDB/https_meet.google.com_0.indexeddb.leveldb/MANIFEST-000001
+2023/01/28-14:46:38.732 941c Level-0 table #5: started
+2023/01/28-14:46:38.738 941c Level-0 table #5: 3483 bytes OK
+2023/01/28-14:46:38.748 941c Delete type=0 #3
+2023/01/28-14:46:38.748 941c Manual compaction at level-0 from (begin) .. (end); will stop at (end)
