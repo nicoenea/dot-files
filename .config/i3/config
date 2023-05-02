@@ -29,7 +29,7 @@ set $mod Mod4
 #####################################################################################################################
 
 # Background
-exec_always --no-startup-id feh --bg-scale ~/Pictures/taiwan.jpg
+exec_always --no-startup-id feh --bg-fill ~/Pictures/taiwan.jpg
 
 # reload the configuration file
 bindsym $mod+Shift+c   reload
@@ -53,7 +53,7 @@ mode "move-workspace" {
 #################                          Display Setup                                            #################
 #####################################################################################################################
 # Monitor Position & Rotation (use arandr to make it easier lol)
-exec -b xrandr --output HDMI-0 --off --output DP-0 --off --output DP-1 --off --output DP-2 --primary --mode 2560x1440 --pos 0x515 --rotate normal --output DP-3 --off --output DP-4 --mode 2560x1440 --pos 2560x0 --rotate right --output DP-5 --off
+exec xrandr --output HDMI-0 --off --output DP-0 --off --output DP-1 --off --output DP-2 --primary --mode 2560x1440 --pos 0x515 --rotate normal --output DP-3 --off --output DP-4 --mode 2560x1440 --pos 2560x0 --rotate right --output DP-5 --off
 
 
 # Font for window titles. Will also be used by the bar unless a different font
@@ -68,7 +68,6 @@ exec --no-startup-id xss-lock --transfer-sleep-lock -- betterlockscreen --lock
 # and nm-applet is a desktop environment-independent system tray GUI for it.
 exec --no-startup-id nm-applet
 
-exec_always --no-startup-id picom -b
 exec_always --no-startup-id ~/.config/polybar/polybar-launch.sh
 
 set $refresh_i3status killall -SIGUSR1 i3status
@@ -301,7 +300,7 @@ bindsym Mod1+l exec --no-startup-id betterlockscreen --lock
 
 #if you want transparency on non-focused windows, ...
 exec_always --no-startup-id picom --config ~/.config/i3/picom.conf
-exec_always --no-startup-id nitrogen --restore
+exec_always --no-startup-id --restore
 exec_always --no-startup-id ~/.config/i3/scripts/mouse.sh
 
 #####################################################################################################################
