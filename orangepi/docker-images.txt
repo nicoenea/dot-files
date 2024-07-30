@@ -1,0 +1,13 @@
+discordbot-docker_musicbot:latest
+<none>:<none>
+<none>:<none>
+<none>:<none>
+<none>:<none>
+<none>:<none>
+<none>:<none>
+<none>:<none>
+<none>:<none>
+nextcloud:latest
+mariadb:latest
+pihole/pihole:latest
+openjdk:17-jdk-slim
