@@ -89,7 +89,6 @@ ZSH_THEME="powerlevel10k/powerlevel10k"
 # Add wisely, as too many plugins slow down shell startup.
 plugins=(
     git
-	pyenv
 	brew
 	common-aliases
 	node
@@ -145,3 +144,8 @@ alias ohmyzshconfig="code ~/.oh-my-zsh"
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
 if [ -x "/home/linuxbrew/.linuxbrew/bin/brew" ]; then eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"; fi
+export PATH="$HOME/.local/bin:$PATH"
+export PATH="$HOME/.local/lib/npm-global/bin:$PATH"
+export PATH="$HOME/.local/bin:$PATH"
+export PATH="$HOME/.local/bin:$PATH"
+eval "$(pyenv virtualenv-init -)"

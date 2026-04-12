@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# Toggle caelestia game mode — modifies shell.json (hot-reloaded by caelestia-shell)
+# On: hides bar, removes screen corner rounding
+# Off: restores bar and rounding
+# State tracked via /tmp/caelestia-gamemode
+
+SHELL_JSON="$HOME/.config/caelestia/shell.json"
+STATE="/tmp/caelestia-gamemode"
+CAELESTIA="$HOME/.local/bin/caelestia"
+
+if [ -f "$STATE" ]; then
+    rm "$STATE"
+    $CAELESTIA shell gameMode disable
+    jq '.bar.persistent = true | .border.rounding = 25' \
+        "$SHELL_JSON" > /tmp/_shell.json && mv /tmp/_shell.json "$SHELL_JSON"
+else
+    touch "$STATE"
+    $CAELESTIA shell gameMode enable
+    jq '.bar.persistent = false | .border.rounding = 0' \
+        "$SHELL_JSON" > /tmp/_shell.json && mv /tmp/_shell.json "$SHELL_JSON"
+fi

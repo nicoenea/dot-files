@@ -1,0 +1,144 @@
+@define-color base    #1e1e2e;
+@define-color crust   #11111b;
+@define-color text    #cdd6f4;
+@define-color subtext #a6adc8;
+@define-color surface #313244;
+@define-color purple  #cba6f7;
+@define-color blue    #89b4fa;
+@define-color red     #f38ba8;
+@define-color pink    #f5c2e7;
+
+* {
+  font-family: "MesloLGS NF", "Noto Sans", sans-serif;
+  font-size: 12px;
+  border: none;
+  border-radius: 0;
+  min-height: 0;
+  padding: 0;
+  margin: 0;
+}
+
+window#waybar {
+  background-color: alpha(@crust, 0.92);
+  color: @text;
+  border-bottom: 1px solid alpha(@surface, 0.5);
+}
+
+/* ===================== LEFT ===================== */
+
+#custom-launcher {
+  font-size: 14px;
+  padding: 0 12px;
+  color: @purple;
+}
+
+#custom-launcher:hover {
+  color: @text;
+  background: alpha(@surface, 0.5);
+}
+
+#workspaces {
+  padding: 0 4px;
+}
+
+#workspaces button {
+  padding: 0 6px;
+  color: alpha(@subtext, 0.5);
+  font-size: 11px;
+  background: none;
+  border-radius: 4px;
+  margin: 4px 2px;
+  min-width: 22px;
+  transition: all 0.15s ease;
+}
+
+#workspaces button:hover {
+  background: alpha(@surface, 0.6);
+  color: @text;
+}
+
+#workspaces button.active {
+  background: alpha(@purple, 0.25);
+  color: @purple;
+  font-weight: bold;
+}
+
+#workspaces button.urgent {
+  background: alpha(@red, 0.25);
+  color: @red;
+}
+
+/* ===================== CENTER ===================== */
+
+#clock {
+  font-size: 13px;
+  font-weight: 600;
+  color: @text;
+  padding: 0 12px;
+  letter-spacing: 0.5px;
+}
+
+#clock:hover {
+  background: alpha(@surface, 0.5);
+  border-radius: 6px;
+}
+
+/* ===================== RIGHT ===================== */
+
+#pulseaudio,
+#network,
+#tray,
+#custom-power {
+  padding: 0 10px;
+  color: @text;
+}
+
+#pulseaudio {
+  color: @pink;
+}
+
+#pulseaudio:hover,
+#network:hover {
+  background: alpha(@surface, 0.5);
+}
+
+#pulseaudio.muted {
+  color: alpha(@subtext, 0.5);
+}
+
+#network {
+  color: @blue;
+}
+
+#network.disconnected {
+  color: alpha(@subtext, 0.4);
+}
+
+#tray {
+  padding: 0 8px;
+}
+
+#tray > .passive {
+  -gtk-icon-effect: dim;
+}
+
+#custom-power {
+  font-size: 13px;
+  color: @red;
+  padding: 0 12px;
+}
+
+#custom-power:hover {
+  background: alpha(@red, 0.15);
+  color: @red;
+}
+
+/* ===================== TOOLTIP ===================== */
+
+tooltip {
+  background: @crust;
+  border: 1px solid @surface;
+  border-radius: 8px;
+  color: @text;
+  padding: 8px;
+}

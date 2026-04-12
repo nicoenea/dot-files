@@ -1,0 +1,79 @@
+command = /usr/bin/zsh
+# Ghostty Configuration (v1.1.3)
+# Save this to: ~/.config/ghostty/config
+ 
+# Custom shader (Balatro effect)
+# First shader: Balatro background effect
+custom-shader = shaders/balatro.glsl
+
+# Second shader: CRT effect (darkens and adds scan lines)
+custom-shader = shaders/crt.glsl
+
+# Third Shader: Wiggle Shader
+# custom-shader = shaders/wiggle.glsl
+ 
+# Enable animation for both
+custom-shader-animation = true
+ 
+# Font settings
+font-family = m6x11
+font-size = 15
+ 
+# Window settings
+window-padding-x = 0
+window-padding-y = 0
+ 
+# Shell and command
+shell-integration = zsh
+ 
+# Terminal settings
+term = xterm-256color
+ 
+# Cursor settings
+cursor-style = block
+ 
+# Scrollback
+scrollback-limit = 1000
+ 
+# macOS specific settings
+macos-option-as-alt = left
+macos-titlebar-style = native
+# macos-window-decoration = true
+# or if the above doesn't work, try:
+window-decoration = true
+ 
+# Colors - Snazzy theme
+background = 000000
+foreground = ffffff
+background-opacity = 1
+ 
+# Cursor colors
+cursor-color = eff0eb
+cursor-text = 282a36
+ 
+# Selection colors
+selection-background = 97979b
+selection-foreground = 000000
+ 
+# iTerm2-style tab switching
+keybind = ctrl+tab=next_tab
+keybind = ctrl+shift+tab=previous_tab
+ 
+# ANSI colors (0-7: normal, 8-15: bright)
+palette = 0=#000000
+palette = 1=#ff5c57
+palette = 2=#5af78e
+palette = 3=#f3f99d
+palette = 4=#57c7ff
+palette = 5=#ff6ac1
+palette = 6=#9aedfe
+palette = 7=#f1f1f0
+palette = 8=#a8a8a8
+palette = 9=#ff5c57
+palette = 10=#5af78e
+palette = 11=#f3f99d
+palette = 12=#57c7ff
+palette = 13=#ff6ac1
+palette = 14=#9aedfe
+palette = 15=#f1f1f0
+keybind = shift+enter=text:\n
