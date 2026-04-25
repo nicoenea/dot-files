@@ -44,6 +44,8 @@ echo "Deploying caelestia shell config"
 symlink "$FEDORA_DIR/.config/caelestia/shell.json"    "$HOME/.config/caelestia/shell.json"
 symlink "$FEDORA_DIR/.local/bin/caelestia-gamemode"   "$HOME/.local/bin/caelestia-gamemode"
 chmod +x "$FEDORA_DIR/.local/bin/caelestia-gamemode"
+symlink "$FEDORA_DIR/.local/bin/skydimo-init"          "$HOME/.local/bin/skydimo-init"
+chmod +x "$FEDORA_DIR/.local/bin/skydimo-init"
 
 # Waybar and Mako configs are kept for reference but are no longer autostarted.
 # caelestia-shell handles the bar, notifications, OSD, launcher, and lock screen.
