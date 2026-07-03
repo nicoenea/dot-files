@@ -51,14 +51,14 @@ Wallpapers live in `~/Pictures/Wallpapers`.
 | `Super+Shift+F` | Fullscreen (maximize, keep bar) |
 | `Super+V` | Toggle floating |
 | `Super+G` | Game mode (suppresses notifications) |
-| `Super+Escape` | Lock screen |
+| `Super+Escape` / `Super+L` | Lock screen |
 | `Super+Shift+Ctrl+Q` | Exit Hyprland |
 
 ### Focus & Window Management
 | Key | Action |
 |-----|--------|
-| `Super+H/J/K/L` | Move focus left/down/up/right |
-| `Super+Shift+H/J/K/L` | Move window left/down/up/right |
+| `Alt+H/J/K/L` (or arrows) | Move focus left/down/up/right |
+| `Alt+Shift+H/J/K/L` | Move window left/down/up/right |
 | `Super+Ctrl+Arrows` | Resize active window (40px steps) |
 | `Super+,` / `Super+.` | Focus left/right monitor |
 | `Super+Shift+,` / `Super+Shift+.` | Move workspace to left/right monitor |

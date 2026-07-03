@@ -1,0 +1,5 @@
+#!/bin/bash
+# Auto-select DP-2 (ASUS VG27AC1A, Skydimo strip monitor) for HyperHDR screen capture.
+# Replaces the interactive hyprland-share-picker dialog via xdph.conf custom_picker_binary.
+# Output format: [SELECTION]/screen:<outputName>
+echo "[SELECTION]/screen:DP-2"

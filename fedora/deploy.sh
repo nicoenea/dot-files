@@ -37,8 +37,13 @@ if [ -f "$FEDORA_DIR/.p10k.zsh" ]; then
     symlink "$FEDORA_DIR/.p10k.zsh" "$HOME/.p10k.zsh"
 fi
 
+echo "Deploying GTK settings (icon theme, cursor, fonts)"
+symlink "$FEDORA_DIR/.config/gtk-3.0/settings.ini"    "$HOME/.config/gtk-3.0/settings.ini"
+symlink "$FEDORA_DIR/.config/gtk-4.0/settings.ini"    "$HOME/.config/gtk-4.0/settings.ini"
+
 echo "Deploying Hyprland dotfiles"
 symlink "$FEDORA_DIR/.config/hypr/hyprland.conf"      "$HOME/.config/hypr/hyprland.conf"
+symlink "$FEDORA_DIR/.config/hypr/xdph.conf"          "$HOME/.config/hypr/xdph.conf"
 
 echo "Deploying caelestia shell config"
 symlink "$FEDORA_DIR/.config/caelestia/shell.json"    "$HOME/.config/caelestia/shell.json"
@@ -46,6 +51,8 @@ symlink "$FEDORA_DIR/.local/bin/caelestia-gamemode"   "$HOME/.local/bin/caelesti
 chmod +x "$FEDORA_DIR/.local/bin/caelestia-gamemode"
 symlink "$FEDORA_DIR/.local/bin/skydimo-init"          "$HOME/.local/bin/skydimo-init"
 chmod +x "$FEDORA_DIR/.local/bin/skydimo-init"
+symlink "$FEDORA_DIR/.local/bin/hyperhdr-picker"       "$HOME/.local/bin/hyperhdr-picker"
+chmod +x "$FEDORA_DIR/.local/bin/hyperhdr-picker"
 
 # Waybar and Mako configs are kept for reference but are no longer autostarted.
 # caelestia-shell handles the bar, notifications, OSD, launcher, and lock screen.
@@ -60,3 +67,6 @@ symlink "$DOTFILES_DIR/.config/i3/picom.conf"         "$HOME/.config/i3/picom.co
 symlink "$DOTFILES_DIR/.config/i3/scripts/mouse.sh"   "$HOME/.config/i3/scripts/mouse.sh"
 
 echo "Done."
+echo ""
+echo "NOTE: To revert GRUB to Fedora defaults (removes any custom theme), run:"
+echo "  sudo ./grub_setup.sh"
