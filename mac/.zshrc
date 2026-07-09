@@ -1,3 +1,10 @@
+# Ghostty runs its tabs as tmux windows: macOS-native tabs register as
+# separate windows with tiling WMs (AeroSpace), breaking layouts.
+if [ -z "$TMUX" ] && [ "$TERM_PROGRAM" = "ghostty" ] && [[ -o interactive ]] \
+   && command -v tmux >/dev/null; then
+  exec tmux new-session
+fi
+
 # Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
 # Initialization code that may require console input (password prompts, [y/n]
 # confirmations, etc.) must go above this block; everything else may go below.

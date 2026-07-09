@@ -8,6 +8,7 @@ cask "dimentium/autoraise/autoraiseapp"     # focus-follows-mouse (sbmpost/AutoR
 cask "font-hack-nerd-font"         # nerd font for p10k glyphs
 
 brew "bat"                         # .zshrc aliases cat=bat
+brew "tmux"                        # Ghostty tabs live in tmux (see tmux/.tmux.conf)
 
 # Dev toolchain referenced in .zshrc
 brew "pyenv"

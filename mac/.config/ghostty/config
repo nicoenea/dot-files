@@ -51,9 +51,11 @@ cursor-text = 282a36
 selection-background = 97979b
 selection-foreground = 000000
 
-# iTerm2-style tab switching
-keybind = ctrl+tab=next_tab
-keybind = ctrl+shift+tab=previous_tab
+# Tabs are tmux windows now (native tabs break tiling WMs) — these send
+# the tmux prefix (ctrl-b, \x02) sequences: c=new, n=next, p=previous
+keybind = super+t=text:\x02c
+keybind = ctrl+tab=text:\x02n
+keybind = ctrl+shift+tab=text:\x02p
 
 # ANSI colors (0-7: normal, 8-15: bright)
 palette = 0=#000000
