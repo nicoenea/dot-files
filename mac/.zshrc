@@ -132,16 +132,17 @@ export NVM_DIR="$HOME/.nvm"
 
 # Compilation flags
 # export ARCHFLAGS="-arch x86_64"
-
+export USE_GKE_GCLOUD_AUTH_PLUGIN=True
 # Set personal aliases, overriding those provided by oh-my-zsh libs,
 # plugins, and themes. Aliases can be placed here, though oh-my-zsh
 # users are encouraged to define aliases within the ZSH_CUSTOM folder.
 # For a full list of active aliases, run `alias`.
 #
 # Example aliases
-alias zshconfig="vim ~/.zshrc"
+alias zshconfig="code ~/.zshrc"
 alias yabaiconfig="vim ~/.yabairc"
 alias sketchybarrc="vim ~/.config/sketchybar/sketchybarrc"
+alias skhdconfig="vim ~/.skhdrc"
 alias rerice="brew services restart yabai && brew services restart sketchybar"
 alias updatesettings="source ~/.zshrc"
 alias yabairestart="brew services restart yabai"
@@ -153,3 +154,12 @@ alias cat="bat"
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+
+export PATH="/Applications/Docker.app/Contents/Resources/bin:$PATH"
+
+# The next line updates PATH for the Google Cloud SDK.
+if [ -f '/Users/nicolas.enea/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/nicolas.enea/google-cloud-sdk/path.zsh.inc'; fi
+
+# The next line enables shell command completion for gcloud.
+if [ -f '/Users/nicolas.enea/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/nicolas.enea/google-cloud-sdk/completion.zsh.inc'; fi
+export PATH="$HOME/.local/bin:$PATH"
