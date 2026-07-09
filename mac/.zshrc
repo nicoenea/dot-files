@@ -86,7 +86,6 @@ ZSH_THEME="powerlevel10k/powerlevel10k"
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
 plugins=(
-  pyenv
   git
   brew
   common-aliases
@@ -115,9 +114,18 @@ command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
 command -v pyenv >/dev/null && eval "$(pyenv init -)"
 
 # nvm config ($HOMEBREW_PREFIX comes from brew shellenv in .zprofile)
+# Sourcing nvm.sh costs ~2s, so lazy-load it on first use of nvm/node/npm/npx
 export NVM_DIR="$HOME/.nvm"
-[ -s "$HOMEBREW_PREFIX/opt/nvm/nvm.sh" ] && \. "$HOMEBREW_PREFIX/opt/nvm/nvm.sh"  # This loads nvm
-[ -s "$HOMEBREW_PREFIX/opt/nvm/etc/bash_completion.d/nvm" ] && \. "$HOMEBREW_PREFIX/opt/nvm/etc/bash_completion.d/nvm"  # This loads nvm bash_completion
+_load_nvm() {
+  unset -f nvm node npm npx 2>/dev/null
+  [ -s "$HOMEBREW_PREFIX/opt/nvm/nvm.sh" ] && \. "$HOMEBREW_PREFIX/opt/nvm/nvm.sh"
+}
+nvm() { _load_nvm; nvm "$@"; }
+if ! command -v node >/dev/null; then
+  node() { _load_nvm; node "$@"; }
+  npm()  { _load_nvm; npm "$@"; }
+  npx()  { _load_nvm; npx "$@"; }
+fi
 
 # asdf: pre-0.16 has asdf.sh; 0.16+ is a Go binary that only needs shims on PATH
 if [ -f "$HOMEBREW_PREFIX/opt/asdf/libexec/asdf.sh" ]; then
@@ -174,3 +182,15 @@ if [ -f '/Users/nicolas.enea/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/ni
 # The next line enables shell command completion for gcloud.
 if [ -f '/Users/nicolas.enea/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/nicolas.enea/google-cloud-sdk/completion.zsh.inc'; fi
 export PATH="$HOME/.local/bin:$PATH"
+
+# Inside tmux, oh-my-zsh stops emitting xterm-style titles, so pane_title
+# (what the tab bar shows) stays stuck on the hostname. Publish it ourselves:
+# directory when idle, command while running — like native tabs did.
+# Keep this at the very end: earlier init (p10k) rebuilds the hook arrays.
+if [ -n "$TMUX" ]; then
+  _tab_title_precmd()  { printf '\e]2;%s\a' "${PWD/#$HOME/~}"; }
+  _tab_title_preexec() { printf '\e]2;%s\a' "$1"; }
+  autoload -Uz add-zsh-hook
+  add-zsh-hook precmd  _tab_title_precmd
+  add-zsh-hook preexec _tab_title_preexec
+fi
