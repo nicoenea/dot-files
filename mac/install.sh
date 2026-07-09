@@ -42,9 +42,9 @@ ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
 link "$DOTFILES/.zshrc"    "$HOME/.zshrc"
 link "$DOTFILES/.zprofile" "$HOME/.zprofile"
 link "$DOTFILES/.p10k.zsh" "$HOME/.p10k.zsh"
-link "$DOTFILES/.tmux.conf" "$HOME/.tmux.conf"
 link "$DOTFILES/.config/aerospace" "$HOME/.config/aerospace"
 link "$DOTFILES/.config/ghostty"   "$HOME/.config/ghostty"
+link "$DOTFILES/.config/tmux"      "$HOME/.config/tmux"
 
 # --- AutoRaise settings (delay, focus, etc.) ---
 defaults import com.sbmpost.AutoRaise "$DOTFILES/autoraise/com.sbmpost.AutoRaise.plist"

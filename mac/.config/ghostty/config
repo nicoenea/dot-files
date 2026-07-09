@@ -52,8 +52,9 @@ selection-background = 97979b
 selection-foreground = 000000
 
 # Tabs are tmux windows now (native tabs break tiling WMs) — these send
-# the tmux prefix (ctrl-b, \x02) sequences: c=new, n=next, p=previous
+# the tmux prefix (ctrl-b, \x02) sequences: c=new, &=close, n=next, p=previous
 keybind = super+t=text:\x02c
+keybind = super+w=text:\x02&
 keybind = ctrl+tab=text:\x02n
 keybind = ctrl+shift+tab=text:\x02p
 
