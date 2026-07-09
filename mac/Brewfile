@@ -13,3 +13,9 @@ brew "bat"                         # .zshrc aliases cat=bat
 brew "pyenv"
 brew "nvm"
 brew "asdf"
+
+# pyenv build deps (compiling a Python needs these headers)
+brew "openssl@3"
+brew "readline"
+brew "sqlite3"
+brew "xz"
