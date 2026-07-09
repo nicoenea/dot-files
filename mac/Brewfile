@@ -1,9 +1,10 @@
 # Core apps for this setup
 tap "nikitabobko/tap"
+tap "dimentium/autoraise"
 
-cask "nikitabobko/tap/aerospace"   # tiling window manager
-cask "ghostty"                     # terminal
-cask "autoraise"                   # focus-follows-mouse (sbmpost/AutoRaise)
+cask "nikitabobko/tap/aerospace"            # tiling window manager
+cask "ghostty"                              # terminal
+cask "dimentium/autoraise/autoraiseapp"     # focus-follows-mouse (sbmpost/AutoRaise)
 cask "font-hack-nerd-font"         # nerd font for p10k glyphs
 
 brew "bat"                         # .zshrc aliases cat=bat

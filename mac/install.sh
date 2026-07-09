@@ -21,6 +21,9 @@ if ! command -v brew >/dev/null; then
   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
   eval "$(/opt/homebrew/bin/brew shellenv)"
 fi
+# older brew has no `trust`; newer refuses untrusted taps
+brew trust nikitabobko/tap 2>/dev/null || true
+brew trust dimentium/autoraise 2>/dev/null || true
 brew bundle --file="$DOTFILES/Brewfile"
 
 # --- oh-my-zsh + theme + plugins ---
