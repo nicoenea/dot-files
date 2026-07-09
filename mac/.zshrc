@@ -105,15 +105,19 @@ source $ZSH/oh-my-zsh.sh
 # Pyenv config 
 export PYENV_ROOT="$HOME/.pyenv"
 command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
-eval "$(pyenv init -)"
+command -v pyenv >/dev/null && eval "$(pyenv init -)"
 
-# nvm config
+# nvm config ($HOMEBREW_PREFIX comes from brew shellenv in .zprofile)
 export NVM_DIR="$HOME/.nvm"
-[ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && \. "/opt/homebrew/opt/nvm/nvm.sh"  # This loads nvm
-[ -s "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" ] && \. "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"  # This loads nvm bash_completion
+[ -s "$HOMEBREW_PREFIX/opt/nvm/nvm.sh" ] && \. "$HOMEBREW_PREFIX/opt/nvm/nvm.sh"  # This loads nvm
+[ -s "$HOMEBREW_PREFIX/opt/nvm/etc/bash_completion.d/nvm" ] && \. "$HOMEBREW_PREFIX/opt/nvm/etc/bash_completion.d/nvm"  # This loads nvm bash_completion
 
-#asdf config init
-. /opt/homebrew/opt/asdf/libexec/asdf.sh
+# asdf: pre-0.16 has asdf.sh; 0.16+ is a Go binary that only needs shims on PATH
+if [ -f "$HOMEBREW_PREFIX/opt/asdf/libexec/asdf.sh" ]; then
+  . "$HOMEBREW_PREFIX/opt/asdf/libexec/asdf.sh"
+elif command -v asdf >/dev/null; then
+  export PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/shims:$PATH"
+fi
 
 
 # User configuration

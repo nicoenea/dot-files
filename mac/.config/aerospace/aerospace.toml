@@ -62,12 +62,6 @@ alt-shift-e = 'move-node-to-workspace 7'
 alt-shift-r = 'move-node-to-workspace 8'
 
 
-# Add this section to handle Ghostty tabs
-[[on-window-detected]]
-if.app-id = 'com.mitchellh.ghostty'
- run = ['layout floating']
-
-# Add this section to handle Ghostty tabs
 [[on-window-detected]]
 if.app-id = 'finder'
 run = ['layout floating']

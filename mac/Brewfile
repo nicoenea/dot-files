@@ -9,7 +9,7 @@ cask "font-hack-nerd-font"         # nerd font for p10k glyphs
 
 brew "bat"                         # .zshrc aliases cat=bat
 
-# Dev toolchain referenced in .zshrc — uncomment what you want on the new machine
-# brew "pyenv"
-# brew "nvm"
-# brew "asdf"
+# Dev toolchain referenced in .zshrc
+brew "pyenv"
+brew "nvm"
+brew "asdf"
