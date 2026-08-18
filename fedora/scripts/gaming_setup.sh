@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-# Fedora gaming setup for NVIDIA + Wayland
+# Fedora gaming setup for AMD (RDNA4 / amdgpu / RADV) + Wayland
 # Run as your regular user: ./gaming_setup.sh
 # Re-running is safe — all steps are idempotent and will upgrade GE-Proton if a newer version is available.
 
@@ -13,7 +13,7 @@ fi
 
 echo ""
 echo "========================================"
-echo "  Fedora Gaming Setup (NVIDIA/Wayland)"
+echo "  Fedora Gaming Setup (AMD/Wayland)"
 echo "========================================"
 echo ""
 
@@ -47,7 +47,6 @@ sudo dnf install -y \
     gamemode \
     gamemode.i686 \
     gamescope \
-    libva-nvidia-driver \
     libva-utils \
     mangohud \
     mangohud.i686 \
@@ -98,20 +97,20 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# NVIDIA Wayland modprobe
+# Hardware video decode
 # ---------------------------------------------------------------------------
+# amdgpu is in-kernel and needs no modprobe options or initramfs rebuild — the
+# only GPU-side setup on AMD is swapping in the freeworld Mesa codecs, since
+# Fedora ships Mesa with H.264/HEVC stripped out for patent reasons.
 echo ""
-echo "==> Writing NVIDIA Wayland modprobe config..."
-MODPROBE_FILE="/etc/modprobe.d/nvidia-wayland.conf"
-MODPROBE_CONTENT="options nvidia-drm modeset=1 fbdev=1"
+echo "==> Enabling H.264/HEVC hardware decode (freeworld Mesa codecs)..."
 NEEDS_REBOOT=0
-if [ "$(cat "$MODPROBE_FILE" 2>/dev/null)" != "$MODPROBE_CONTENT" ]; then
-    echo "$MODPROBE_CONTENT" | sudo tee "$MODPROBE_FILE" > /dev/null
-    echo "  Written. Rebuilding initramfs (this may take a moment)..."
-    sudo dracut --force
-    NEEDS_REBOOT=1
+if rpm -q mesa-va-drivers-freeworld &>/dev/null; then
+    echo "  Already installed, skipping."
 else
-    echo "  Already configured, skipping."
+    sudo dnf swap -y mesa-va-drivers mesa-va-drivers-freeworld
+    sudo dnf swap -y mesa-vdpau-drivers mesa-vdpau-drivers-freeworld
+    echo "  Freeworld codecs installed."
 fi
 
 # ---------------------------------------------------------------------------
@@ -120,12 +119,18 @@ fi
 echo ""
 echo "==> Writing Wayland environment variables..."
 ENV_DIR="$HOME/.config/environment.d"
-ENV_FILE="$ENV_DIR/nvidia-wayland.conf"
+ENV_FILE="$ENV_DIR/gpu-wayland.conf"
 mkdir -p "$ENV_DIR"
+# Also deployed as a symlink by deploy.sh — kept here so this script is
+# standalone on a fresh box. Must stay in sync with
+# fedora/.config/environment.d/gpu-wayland.conf
 cat > "$ENV_FILE" <<'EOF'
-LIBVA_DRIVER_NAME=nvidia
+LIBVA_DRIVER_NAME=radeonsi
 ELECTRON_OZONE_PLATFORM_HINT=auto
 EOF
+# Drop the pre-swap NVIDIA file if it's still lying around; environment.d reads
+# every *.conf in the directory, so a stale one would override the above.
+rm -f "$ENV_DIR/nvidia-wayland.conf"
 echo "  Written to $ENV_FILE"
 
 # ---------------------------------------------------------------------------
@@ -147,10 +152,10 @@ echo "  1. In Steam, right-click a game > Properties > Compatibility"
 echo "     > Force compatibility tool > select GE-Proton"
 echo ""
 echo "  2. Add to each game's Steam launch options:"
-echo "       gamemoderun PROTON_ENABLE_NVAPI=1 __GL_SYNC_TO_VBLANK=0 %command%"
+echo "       gamemoderun %command%"
 echo ""
 echo "  3. (Optional) Enable MangoHud overlay for any game:"
-echo "       MANGOHUD=1 gamemoderun PROTON_ENABLE_NVAPI=1 __GL_SYNC_TO_VBLANK=0 %command%"
+echo "       MANGOHUD=1 gamemoderun %command%"
 echo ""
 echo "  4. To update GE-Proton later: re-run this script or use ProtonUp-Qt:"
 echo "       flatpak run net.davidotek.pupgui2"

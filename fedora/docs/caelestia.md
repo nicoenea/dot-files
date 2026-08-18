@@ -25,8 +25,8 @@ A Material Design 3 / Material You Hyprland desktop rice consisting of:
 
 | File | What changed |
 |---|---|
-| `install_caelestia.sh` | Full Fedora port install script — builds everything from source |
-| `.config/caelestia/shell.json` | caelestia-shell config — bar excluded from DP-3 (right monitor) |
+| `scripts/install_caelestia.sh` | Full Fedora port install script — builds everything from source |
+| `.config/caelestia/shell.json` | caelestia-shell config — `excludedScreens` empty, bar on both monitors |
 | `.config/hypr/hyprland.conf` | Replaced waybar/mako with caelestia-shell; added QML_IMPORT_PATH env |
 | `deploy.sh` | Added caelestia shell.json symlink; commented out waybar/mako symlinks |
 
@@ -37,7 +37,7 @@ A Material Design 3 / Material You Hyprland desktop rice consisting of:
 ```bash
 cd ~/repos/dot-files/fedora
 ./deploy.sh            # symlink configs first
-./install_caelestia.sh # build and install everything
+./scripts/install_caelestia.sh # build and install everything
 ```
 
 Optional flags:
@@ -55,14 +55,19 @@ After install, **restart Hyprland**. caelestia-shell autostarts via hyprland.con
 | Monitor | Connector | Position | Workspaces |
 |---|---|---|---|
 | ASUS VG27AC1A | DP-2 | Left (main) | 1–5 (ALT+1-5) |
-| Gigabyte M27Q | DP-3 | Right | 6–10 (ALT+Q-T) |
+| Gigabyte M27Q | DP-1 | Right | 6–10 (ALT+Q-T) |
 
-The bar runs only on DP-2 (main monitor). DP-3 is excluded via `shell.json`:
+Connector names are not stable — they shift when the GPU or DisplayPort port
+changes (the Gigabyte was `DP-3` under the RTX 3080, `DP-1` under the RX 9070 XT).
+Run `hyprctl monitors` to confirm before using a connector name anywhere.
+
+The bar currently runs on **both** monitors — `excludedScreens` is empty in
+`shell.json`. To restrict it to one, put that monitor's *current* connector in:
 
 ```json
 {
   "bar": {
-    "excludedScreens": ["DP-3"]
+    "excludedScreens": ["DP-1"]
   }
 }
 ```
@@ -196,16 +201,16 @@ To rebuild any component, delete its build sentinel and re-run the script:
 # Rebuild quickshell
 rm -rf ~/.local/src/quickshell/build
 sudo rm -f /usr/local/bin/qs
-./install_caelestia.sh
+./scripts/install_caelestia.sh
 
 # Rebuild caelestia-shell
 rm -rf ~/.local/src/caelestia-shell/build
-./install_caelestia.sh
+./scripts/install_caelestia.sh
 
 # Rebuild libcava
 sudo rm -f /usr/local/lib/libcava.so
 sudo rm -f /usr/lib64/pkgconfig/cava.pc
-./install_caelestia.sh
+./scripts/install_caelestia.sh
 ```
 
 ---

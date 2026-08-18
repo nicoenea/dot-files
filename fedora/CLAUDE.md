@@ -3,14 +3,17 @@
 ## OS & Environment
 - **Distro:** Fedora 43
 - **Desktop:** Hyprland on **Wayland**
-- **GPU:** NVIDIA RTX 3080 (proprietary driver; NVIDIA env vars set in `hyprland.conf`)
+- **GPU:** AMD RX 9070 XT 16 GB (RDNA4/gfx1201) — in-kernel `amdgpu`, Mesa/RADV, no driver install needed
 - **Session type:** Wayland — do not suggest X11-only solutions
 - **Package manager:** `dnf`
 
 ## Hardware
 - **Monitors:**
-  - `DP-2` — ASUS VG27AC1A, left/main, 2560x1440 @ 170Hz — workspaces 1–5
-  - `DP-3` — Gigabyte M27Q, right, 2560x1440 @ 170Hz — workspaces 6–10
+  - ASUS VG27AC1A, left/main, 2560x1440 @ 170Hz — workspaces 1–5 (currently `DP-2`)
+  - Gigabyte M27Q, right, 2560x1440 @ 170Hz — workspaces 6–10 (currently `DP-1`)
+  - `hyprland.conf` matches these by EDID `desc:`, **not** by connector name. The
+    Gigabyte's connector moved `DP-3` → `DP-1` during the Aug 2026 GPU swap and
+    silently fell back to 60 Hz. Do not reintroduce `monitor=DP-N` lines.
 - **Resolution:** 2K (2560x1440)
 
 ## Desktop Environment
@@ -26,11 +29,8 @@
 Replaces both Waybar (bar) and Mako (notifications). Also provides: OSD overlays, app launcher, lock screen, session menu.
 - Autostarted via `exec-once = caelestia shell -d` in hyprland.conf
 - Config: `~/.config/caelestia/shell.json` (symlinked from dotfiles)
-- Bar excluded from DP-3 (right monitor) via `shell.json`
-- See `caelestia.md` for full details on the caelestia setup
-
-> **Note:** Waybar and Mako configs still exist in this repo but are NOT active.
-> They're kept for reference only (deploy.sh has their symlinks commented out).
+- `shell.json` `excludedScreens` is empty — the bar runs on both monitors
+- See `docs/caelestia.md` for full details on the caelestia setup
 
 ### Wallpaper
 `swww-daemon` runs at startup. Use `caelestia wallpaper set <file>` to change wallpaper.
@@ -66,8 +66,8 @@ Wallpapers live in `~/Pictures/Wallpapers`.
 ### Workspaces
 | Key | Action |
 |-----|--------|
-| `Alt+1-5` | Switch to workspace 1–5 (left monitor, DP-2) |
-| `Alt+Q/W/E/R/T` | Switch to workspace 6–10 (right monitor, DP-3) |
+| `Alt+1-5` | Switch to workspace 1–5 (left monitor, ASUS) |
+| `Alt+Q/W/E/R/T` | Switch to workspace 6–10 (right monitor, Gigabyte) |
 | `Shift+Alt+1-5` | Move window to workspace 1–5 |
 | `Shift+Alt+Q/W/E/R/T` | Move window to workspace 6–10 |
 | `Super+Scroll` | Cycle through workspaces |
@@ -90,15 +90,17 @@ Wallpapers live in `~/Pictures/Wallpapers`.
 - **Shell:** zsh with oh-my-zsh + Powerlevel10k theme
 - **Terminal:** Ghostty (custom shaders: balatro.glsl, crt.glsl)
 - **Prompt:** Powerlevel10k (`~/.p10k.zsh`)
-- **Notable tools:** `eza` (modern ls, via cargo), `starship` (via install script), `btop`, `fastfetch`
+- **Notable tools:** `eza` (modern ls, via cargo), `btop`, `fastfetch`
 
 ## Dotfile Management
 **Script:** `deploy.sh` — symlinks all configs into `$HOME`. Run as regular user.
-**Install caelestia:** `install_caelestia.sh` — builds quickshell + caelestia-shell from source on Fedora.
+**Install caelestia:** `scripts/install_caelestia.sh` — builds quickshell + caelestia-shell from source on Fedora.
+**Other scripts:** in `scripts/` — `startup_script.sh` (fresh-install bootstrap), `gaming_setup.sh` (kept separate from main setup), `grub_setup.sh` (revert GRUB to defaults).
+**Docs:** in `docs/` — `caelestia.md`, `TODO.md`, `lights_setup.md` (local only, gitignored).
 
 ## Notes for Claude Code
 - This is a **Wayland** system — always prefer Wayland-compatible solutions
-- **NVIDIA + Wayland**: env vars like `LIBVA_DRIVER_NAME=nvidia`, `__GLX_VENDOR_LIBRARY_NAME=nvidia`, `NVD_BACKEND=direct` are set in hyprland.conf
+- **AMD + Wayland**: only `LIBVA_DRIVER_NAME=radeonsi` is set (in `hyprland.conf` and `.config/environment.d/gpu-wayland.conf`). Never reintroduce `__GLX_VENDOR_LIBRARY_NAME` or `NVD_BACKEND` — they are NVIDIA-only and break GLX/VA-API on this box
 - Package manager is `dnf` — confirm package names exist in Fedora repos before recommending
 - caelestia-shell is the bar/notification daemon — don't suggest waybar or mako as replacements
-- The `caelestia.md` file in this repo has detailed notes on the caelestia install, architecture, and known Fedora-specific issues
+- `docs/caelestia.md` has detailed notes on the caelestia install, architecture, and known Fedora-specific issues
