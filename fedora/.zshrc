@@ -136,7 +136,6 @@ if [ -f "$HOME/.asdf/asdf.sh" ]; then . "$HOME/.asdf/asdf.sh"; fi
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 alias updatesettings="source ~/.zshrc"
 alias zshconfig="code ~/.zshrc"
-alias i3config="code ~/.config/i3/config"
 # alias config='/usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME'
 alias ohmyzshconfig="code ~/.oh-my-zsh"
 
