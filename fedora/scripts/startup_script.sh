@@ -82,6 +82,25 @@ else
     echo 'zsh-syntax-highlighting already installed, skipping.'
 fi
 
+# Desktop stack — COPRs and packages not covered by install_caelestia.sh
+# (enable coprs BEFORE install_caelestia.sh so its hyprland install pulls the copr build)
+echo 'Enabling COPRs and installing desktop packages...'
+sudo dnf copr enable -y solopasha/hyprland     # hyprland stack: hyprland, swww, cliphist, uwsm, ...
+sudo dnf copr enable -y scottames/ghostty
+sudo dnf install -y \
+    ghostty \
+    swww `# wallpaper daemon (autostarted in hyprland.conf)` \
+    ydotool python3-evdev `# ydotoold autostart + rapidfire-* scripts` \
+    wofi `# used by Super+; cliphist picker` \
+    network-manager-applet
+
+# Everyday flatpaks (gaming flatpaks live in gaming_setup.sh)
+if ! flatpak remotes | grep -q flathub; then
+    flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+fi
+flatpak install -y --noninteractive flathub \
+    com.bitwarden.desktop com.brave.Browser com.discordapp.Discord com.spotify.Client
+
 # Deploy dotfiles
 echo ''
 echo 'Deploying dotfiles...'

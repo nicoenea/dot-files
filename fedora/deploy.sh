@@ -10,7 +10,6 @@ if [ "$EUID" -eq 0 ]; then
 fi
 
 FEDORA_DIR="$(cd "$(dirname "$0")" && pwd)"
-DOTFILES_DIR="$(cd "$FEDORA_DIR/.." && pwd)"
 
 symlink() {
     local src="$1"
@@ -30,12 +29,13 @@ symlink "$FEDORA_DIR/.zprofile"                       "$HOME/.zprofile"
 symlink "$FEDORA_DIR/.profile"                        "$HOME/.profile"
 symlink "$FEDORA_DIR/.config/fontconfig/fonts.conf"   "$HOME/.config/fontconfig/fonts.conf"
 symlink "$FEDORA_DIR/.config/ghostty/config.ghostty"  "$HOME/.config/ghostty/config.ghostty"
-symlink "$FEDORA_DIR/.config/ghostty/shaders/balatro.glsl" "$HOME/.config/ghostty/shaders/balatro.glsl"
-symlink "$FEDORA_DIR/.config/ghostty/shaders/crt.glsl"     "$HOME/.config/ghostty/shaders/crt.glsl"
-symlink "$FEDORA_DIR/.config/ghostty/shaders/test.glsl"    "$HOME/.config/ghostty/shaders/test.glsl"
+symlink "$FEDORA_DIR/.config/ghostty/shaders"          "$HOME/.config/ghostty/shaders"
 if [ -f "$FEDORA_DIR/.p10k.zsh" ]; then
     symlink "$FEDORA_DIR/.p10k.zsh" "$HOME/.p10k.zsh"
 fi
+
+symlink "$FEDORA_DIR/.config/environment.d/gpu-wayland.conf" "$HOME/.config/environment.d/gpu-wayland.conf"
+symlink "$FEDORA_DIR/.config/fuzzel/fuzzel.ini"       "$HOME/.config/fuzzel/fuzzel.ini"
 
 echo "Deploying GTK settings (icon theme, cursor, fonts)"
 symlink "$FEDORA_DIR/.config/gtk-3.0/settings.ini"    "$HOME/.config/gtk-3.0/settings.ini"
@@ -54,19 +54,13 @@ chmod +x "$FEDORA_DIR/.local/bin/skydimo-init"
 symlink "$FEDORA_DIR/.local/bin/hyperhdr-picker"       "$HOME/.local/bin/hyperhdr-picker"
 chmod +x "$FEDORA_DIR/.local/bin/hyperhdr-picker"
 
-# Waybar and Mako configs are kept for reference but are no longer autostarted.
-# caelestia-shell handles the bar, notifications, OSD, launcher, and lock screen.
-# To restore the old setup: uncomment below and revert hyprland.conf autostart.
-#symlink "$FEDORA_DIR/.config/waybar/config.jsonc"    "$HOME/.config/waybar/config.jsonc"
-#symlink "$FEDORA_DIR/.config/waybar/style.css"       "$HOME/.config/waybar/style.css"
-#symlink "$FEDORA_DIR/.config/mako/config"            "$HOME/.config/mako/config"
-
-echo "Deploying shared dotfiles from $DOTFILES_DIR"
-symlink "$DOTFILES_DIR/.config/i3/config"             "$HOME/.config/i3/config"
-symlink "$DOTFILES_DIR/.config/i3/picom.conf"         "$HOME/.config/i3/picom.conf"
-symlink "$DOTFILES_DIR/.config/i3/scripts/mouse.sh"   "$HOME/.config/i3/scripts/mouse.sh"
+# Rapid-fire mouse scripts (bound to Super+R / Super+M in hyprland.conf; needs python3-evdev)
+symlink "$FEDORA_DIR/.local/bin/rapidfire-daemon"      "$HOME/.local/bin/rapidfire-daemon"
+chmod +x "$FEDORA_DIR/.local/bin/rapidfire-daemon"
+symlink "$FEDORA_DIR/.local/bin/rapidfire-toggle"      "$HOME/.local/bin/rapidfire-toggle"
+chmod +x "$FEDORA_DIR/.local/bin/rapidfire-toggle"
 
 echo "Done."
 echo ""
 echo "NOTE: To revert GRUB to Fedora defaults (removes any custom theme), run:"
-echo "  sudo ./grub_setup.sh"
+echo "  sudo ./scripts/grub_setup.sh"

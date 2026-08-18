@@ -1,0 +1,120 @@
+#!/usr/bin/env python3
+"""Rapid-fire daemon: grabs the mouse and re-emits all events.
+SIGUSR1 toggles left rapid fire, SIGUSR2 toggles middle rapid fire."""
+import os
+import sys
+import time
+import signal
+import threading
+import evdev
+from evdev import UInput, ecodes as e
+
+INTERVAL = 0.05  # seconds per click cycle (~20/sec)
+
+
+def list_mice():
+    mice = []
+    for path in evdev.list_devices():
+        try:
+            dev = evdev.InputDevice(path)
+            caps = dev.capabilities()
+            phys = dev.phys or ''
+            if not (e.EV_KEY in caps and e.BTN_LEFT in caps[e.EV_KEY]
+                    and e.EV_REL in caps):
+                continue
+            if not phys or 'uinput' in phys or 'py-evdev' in phys:
+                continue
+            mice.append(dev)
+        except Exception:
+            pass
+    mice.sort(key=lambda d: int(d.phys.rsplit('input', 1)[-1])
+              if d.phys and d.phys.rsplit('input', 1)[-1].isdigit() else 99)
+    return mice
+
+
+def main():
+    if '--list' in sys.argv:
+        for dev in list_mice():
+            print(f"{dev.path}  {dev.name}  (phys: {dev.phys})")
+        return
+
+    if len(sys.argv) > 1 and not sys.argv[1].startswith('--'):
+        mouse = evdev.InputDevice(sys.argv[1])
+    else:
+        mice = list_mice()
+        if not mice:
+            print("ERROR: No mouse found.", file=sys.stderr)
+            sys.exit(1)
+        mouse = mice[0]
+
+    print(f"Monitoring: {mouse.name} ({mouse.path})", flush=True)
+
+    caps = mouse.capabilities()
+    for drop in (e.EV_SYN, e.EV_FF, e.EV_MSC):
+        caps.pop(drop, None)
+
+    try:
+        ui = UInput(caps, name='rapidfire-mouse',
+                    vendor=mouse.info.vendor, product=mouse.info.product)
+    except Exception as ex:
+        print(f"ERROR creating virtual device: {ex}", file=sys.stderr)
+        sys.exit(1)
+
+    mouse.grab()
+    print(f"PID {os.getpid()} ready. SIGUSR1=toggle left, SIGUSR2=toggle middle", flush=True)
+
+    lock = threading.Lock()
+    active   = {e.BTN_LEFT: False, e.BTN_MIDDLE: False}
+    stop_evt = {e.BTN_LEFT: threading.Event(), e.BTN_MIDDLE: threading.Event()}
+    threads  = {e.BTN_LEFT: None,  e.BTN_MIDDLE: None}
+
+    def make_clicker(btn_code):
+        def clicker():
+            while not stop_evt[btn_code].is_set():
+                with lock:
+                    ui.write(e.EV_KEY, btn_code, 1)
+                    ui.syn()
+                time.sleep(INTERVAL / 2)
+                with lock:
+                    ui.write(e.EV_KEY, btn_code, 0)
+                    ui.syn()
+                time.sleep(INTERVAL / 2)
+        return clicker
+
+    def toggle(btn_code):
+        active[btn_code] = not active[btn_code]
+        name = {e.BTN_LEFT: 'left', e.BTN_MIDDLE: 'middle'}.get(btn_code, str(btn_code))
+        print(f"Rapid fire [{name}]: {'ON' if active[btn_code] else 'OFF'}", flush=True)
+
+    signal.signal(signal.SIGUSR1, lambda s, f: toggle(e.BTN_LEFT))
+    signal.signal(signal.SIGUSR2, lambda s, f: toggle(e.BTN_MIDDLE))
+
+    try:
+        for event in mouse.read_loop():
+            btn = event.code if (event.type == e.EV_KEY
+                                 and event.code in active
+                                 and active[event.code]) else None
+            if btn is not None:
+                if event.value == 1 and (threads[btn] is None or not threads[btn].is_alive()):
+                    stop_evt[btn].clear()
+                    threads[btn] = threading.Thread(target=make_clicker(btn), daemon=True)
+                    threads[btn].start()
+                elif event.value == 0:
+                    stop_evt[btn].set()
+                    if threads[btn]:
+                        threads[btn].join(timeout=1)
+            elif event.type == e.EV_SYN:
+                with lock:
+                    ui.syn()
+            else:
+                with lock:
+                    ui.write(event.type, event.code, event.value)
+    finally:
+        for ev in stop_evt.values():
+            ev.set()
+        mouse.ungrab()
+        ui.close()
+
+
+if __name__ == '__main__':
+    main()

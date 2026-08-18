@@ -95,14 +95,9 @@ success "DNF packages installed"
 # 1b. PACKAGES NOT IN FEDORA REPOS
 # ────────────────────────────────────────────────────────────
 
-# starship — not in Fedora repos, install via official script
-if ! command -v starship &>/dev/null; then
-    info "Installing starship prompt..."
-    curl -sS https://starship.rs/install.sh | sh -s -- --yes
-    success "starship installed"
-else
-    skip "starship"
-fi
+# starship intentionally NOT installed — the prompt here is zsh + powerlevel10k.
+# (caelestia's fish config references starship, but fish is only used
+# non-interactively by caelestia-cli, so the init line never runs.)
 
 # eza — not in Fedora 43 repos, install via cargo
 if ! command -v eza &>/dev/null; then

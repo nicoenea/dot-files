@@ -1,0 +1,21 @@
+#!/bin/bash
+# Toggle rapid-fire for a mouse button via SIGUSR1/SIGUSR2.
+# Usage: rapidfire-toggle [left|middle]
+BUTTON=${1:-left}
+PIDFILE="/tmp/rapidfire.pid"
+
+case "$BUTTON" in
+    left)   SIG=USR1 ;;
+    middle) SIG=USR2 ;;
+    *) echo "Unknown button: $BUTTON. Use: left, middle"; exit 1 ;;
+esac
+
+# Start daemon if not running
+if [ ! -f "$PIDFILE" ] || ! kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
+    python3 ~/.local/bin/rapidfire-daemon &
+    echo $! > "$PIDFILE"
+    sleep 0.3  # give daemon time to grab the mouse
+fi
+
+# Toggle the button
+kill -$SIG "$(cat "$PIDFILE")"
