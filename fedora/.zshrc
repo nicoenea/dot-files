@@ -103,6 +103,9 @@ plugins=(
 	zsh-syntax-highlighting
 	zsh-autosuggestions
 )
+# Claude Code copies interactive aliases into its agents' shells: common-aliases' rm/cp/mv -i prompts
+# silently skip (or hang) unattended commands, and its global aliases (G, H, L...) rewrite them.
+[[ -n $CLAUDECODE ]] && plugins=(${plugins:#common-aliases})
 
 source $ZSH/oh-my-zsh.sh
 
