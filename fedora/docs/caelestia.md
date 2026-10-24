@@ -170,6 +170,10 @@ ldconfig     → /etc/ld.so.conf.d/usr-local.conf  (registers /usr/local/lib)
 
 ## All problems encountered and how they were fixed
 
+> History from the original March 2026 port. quickshell is now the `quickshell-git` package
+> and the shell is built by `update-caelestia`, so the build-failure tables below no longer
+> describe the current setup; they're kept for when something similar resurfaces.
+
 ### DNF package issues
 
 | Problem | Fix |

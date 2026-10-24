@@ -3,7 +3,8 @@ set -e
 
 # Install caelestia-dots on Fedora.
 # Ports the Arch-based caelestia setup (https://github.com/caelestia-dots/caelestia)
-# to Fedora by building the two AUR-only components from source.
+# to Fedora: quickshell-git from copr, caelestia-shell/cli/m3shapes built from
+# pinned release tags by .local/bin/update-caelestia.
 #
 # Run as your regular user: ./install_caelestia.sh
 # Optional flags:
@@ -44,7 +45,8 @@ sudo dnf install -y --skip-unavailable \
     `# Build tools` \
     cmake ninja-build clang clang-devel gcc-c++ git \
     `# Qt6 — needed by quickshell + caelestia-shell` \
-    `# quickshell build deps (all discovered from its CMakeLists)` \
+    `# Formerly quickshell's source-build deps (now the quickshell-git package); kept,` \
+    `# several are shared with the caelestia-shell/m3shapes builds` \
     cli11-devel \
     libdrm-devel mesa-libgbm-devel libglvnd-devel \
     wayland-devel wayland-protocols-devel \
