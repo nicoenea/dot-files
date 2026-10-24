@@ -52,22 +52,29 @@ After install, **restart Hyprland**. caelestia-shell autostarts via hyprland.con
 
 ## Dual-monitor setup
 
-| Monitor | Connector | Position | Workspaces |
-|---|---|---|---|
-| ASUS VG27AC1A | DP-2 | Left (main) | 1–5 (ALT+1-5) |
-| Gigabyte M27Q | DP-1 | Right | 6–10 (ALT+Q-T) |
+| Monitor | Position | Workspaces |
+|---|---|---|
+| ASUS VG27AC1A | Left (main) — Skydimo strip is on this one | 1–5 (ALT+1-5) |
+| Gigabyte M27Q | Right | 6–10 (ALT+Q-T) |
 
-Connector names are not stable — they shift when the GPU or DisplayPort port
-changes (the Gigabyte was `DP-3` under the RTX 3080, `DP-1` under the RX 9070 XT).
-Run `hyprctl monitors` to confirm before using a connector name anywhere.
+Connector names are deliberately **not** listed here, because they are not stable —
+they shift when the GPU changes or the DisplayPort cables are reseated. The ASUS
+has been `DP-2` and `DP-1`; the Gigabyte has been `DP-3`, `DP-1`, and `DP-2`.
+`hyprland.conf` pins monitors by EDID `desc:` and `hyperhdr-picker` resolves by
+EDID model at runtime, so neither needs updating when this happens.
 
-The bar currently runs on **both** monitors — `excludedScreens` is empty in
-`shell.json`. To restrict it to one, put that monitor's *current* connector in:
+`excludedScreens` is the one place that still takes a raw connector name — the bar
+currently runs on **both** monitors because it is empty in `shell.json`. If you
+restrict it, look the name up first and expect to redo it after any cable change:
+
+```bash
+hyprctl monitors -j | jq -r '.[] | "\(.name)\t\(.model)"'
+```
 
 ```json
 {
   "bar": {
-    "excludedScreens": ["DP-1"]
+    "excludedScreens": ["<current connector of the monitor to skip>"]
   }
 }
 ```

@@ -1,5 +1,26 @@
 #!/bin/bash
-# Auto-select DP-2 (ASUS VG27AC1A, Skydimo strip monitor) for HyperHDR screen capture.
-# Replaces the interactive hyprland-share-picker dialog via xdph.conf custom_picker_binary.
+# Auto-select the ASUS VG27AC1A (the monitor the Skydimo strip is mounted behind)
+# for HyperHDR screen capture. Replaces the interactive hyprland-share-picker
+# dialog via xdph.conf custom_picker_binary.
+#
+# Resolved by EDID model at runtime, NOT hardcoded: connector names shift when the
+# GPU changes or the DisplayPort cables are reseated (this monitor has been DP-2
+# and DP-1 within a single day). xdph's selection protocol only accepts a real
+# output name, so we look it up here instead of hardcoding one.
+#
 # Output format: [SELECTION]/screen:<outputName>
-echo "[SELECTION]/screen:DP-2"
+
+TARGET_MODEL="VG27AC1A"
+
+OUTPUT=$(hyprctl monitors -j 2>/dev/null \
+    | jq -r --arg m "$TARGET_MODEL" 'first(.[] | select(.model == $m) | .name) // empty')
+
+# Fall back to the focused monitor so capture still works if the ASUS is
+# unplugged or renamed, rather than handing xdph an empty selection.
+if [[ -z "$OUTPUT" ]]; then
+    OUTPUT=$(hyprctl monitors -j 2>/dev/null | jq -r 'first(.[] | select(.focused) | .name) // empty')
+fi
+
+[[ -z "$OUTPUT" ]] && exit 1
+
+echo "[SELECTION]/screen:$OUTPUT"

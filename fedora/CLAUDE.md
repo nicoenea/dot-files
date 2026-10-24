@@ -9,11 +9,14 @@
 
 ## Hardware
 - **Monitors:**
-  - ASUS VG27AC1A, left/main, 2560x1440 @ 170Hz — workspaces 1–5 (currently `DP-2`)
-  - Gigabyte M27Q, right, 2560x1440 @ 170Hz — workspaces 6–10 (currently `DP-1`)
-  - `hyprland.conf` matches these by EDID `desc:`, **not** by connector name. The
-    Gigabyte's connector moved `DP-3` → `DP-1` during the Aug 2026 GPU swap and
-    silently fell back to 60 Hz. Do not reintroduce `monitor=DP-N` lines.
+  - ASUS VG27AC1A, left/main, 2560x1440 @ 170Hz — workspaces 1–5
+  - Gigabyte M27Q, right, 2560x1440 @ 170Hz — workspaces 6–10
+  - **Never hardcode a `DP-N` connector name anywhere.** They are not stable: the
+    Gigabyte went `DP-3` → `DP-1` during the Aug 2026 GPU swap (silently dropping to
+    60 Hz because its `monitor=DP-3` line stopped matching), then the two swapped
+    again when the cables were reseated. `hyprland.conf` matches by EDID `desc:` and
+    `hyperhdr-picker` resolves by EDID model at runtime. Run `hyprctl monitors` if
+    you ever need the current name.
 - **Resolution:** 2K (2560x1440)
 
 ## Desktop Environment
