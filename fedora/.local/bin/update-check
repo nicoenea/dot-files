@@ -4,6 +4,8 @@
 #   - dnf:     check + notify only, never installs (needs sudo, and a
 #              Hyprland/Mesa/kernel update can break the desktop mid-session)
 #   - copr:    flags enabled coprs that are dead or stale for this Fedora release
+#   - caelestia: flags new caelestia-shell/cli releases (via update-caelestia --check),
+#              once per release; installing them is update-caelestia's job
 # One caelestia notification when there is something to act on.
 #
 # Usage: update-check [--dry-run]
@@ -141,6 +143,26 @@ while read -r repo _; do
         log "copr: $owner/$project ok ($npkgs pkgs, newest build ${age}d old)"
     fi
 done < <(dnf 60 repolist --enabled 2>>"$LOG")
+
+# --- caelestia releases ----------------------------------------------------
+# update-caelestia builds pinned tags, which can be held back on purpose (e.g. a
+# release needs a newer Qt), so each new release is announced once, not daily.
+NOTIFIED="${XDG_STATE_HOME:-$HOME/.local/state}/caelestia-releases-notified"
+if check=$(timeout 20 "$HOME/.local/bin/update-caelestia" --check 2>>"$LOG"); then
+    while read -r name have _ latest status; do
+        if [[ "$status" != "(update available)" ]]; then
+            log "caelestia: $name $have up to date"
+        elif grep -qxF "$name $latest" "$NOTIFIED" 2>/dev/null; then
+            log "caelestia: $name $latest available, already notified"
+        else
+            log "caelestia: $name $have -> $latest available"
+            lines+=("$name ${have:0:10} → $latest available. Bump the tag in update-caelestia, then run it")
+            (( DRY_RUN )) || echo "$name $latest" >> "$NOTIFIED"
+        fi
+    done <<<"$check"
+else
+    log "caelestia: release check failed (exit $?), skipped"
+fi
 
 # --- Notify ----------------------------------------------------------------
 if (( ${#lines[@]} )); then
