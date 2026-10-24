@@ -90,7 +90,7 @@ sudo dnf copr enable -y errornointernet/quickshell  # quickshell-git (caelestia-
 sudo dnf copr enable -y scottames/ghostty
 sudo dnf install -y \
     ghostty \
-    swww `# wallpaper daemon (autostarted in hyprland.conf)` \
+    swww `# wallpaper daemon (autostarted in hypr/hyprland/execs.lua)` \
     ydotool python3-evdev `# ydotoold autostart + rapidfire-* scripts` \
     wofi `# used by Super+; cliphist picker` \
     network-manager-applet

@@ -49,7 +49,13 @@ symlink "$FEDORA_DIR/.config/gtk-3.0/settings.ini"    "$HOME/.config/gtk-3.0/set
 symlink "$FEDORA_DIR/.config/gtk-4.0/settings.ini"    "$HOME/.config/gtk-4.0/settings.ini"
 
 echo "Deploying Hyprland dotfiles"
-symlink "$FEDORA_DIR/.config/hypr/hyprland.conf"      "$HOME/.config/hypr/hyprland.conf"
+symlink "$FEDORA_DIR/.config/hypr/hyprland.lua"       "$HOME/.config/hypr/hyprland.lua"
+symlink "$FEDORA_DIR/.config/hypr/hyprland"           "$HOME/.config/hypr/hyprland"
+# Hyprland >= 0.55 uses the Lua config; drop the old hyprlang symlink so the two never conflict.
+if [ -L "$HOME/.config/hypr/hyprland.conf" ]; then
+    rm "$HOME/.config/hypr/hyprland.conf"
+    echo "  Removed stale $HOME/.config/hypr/hyprland.conf symlink"
+fi
 symlink "$FEDORA_DIR/.config/hypr/xdph.conf"          "$HOME/.config/hypr/xdph.conf"
 
 echo "Deploying caelestia shell config"
@@ -61,7 +67,7 @@ chmod +x "$FEDORA_DIR/.local/bin/skydimo-init"
 symlink "$FEDORA_DIR/.local/bin/hyperhdr-picker"       "$HOME/.local/bin/hyperhdr-picker"
 chmod +x "$FEDORA_DIR/.local/bin/hyperhdr-picker"
 
-# Rapid-fire mouse scripts (bound to Super+R / Super+M in hyprland.conf; needs python3-evdev)
+# Rapid-fire mouse scripts (bound to Super+R / Super+M in hypr/hyprland/keybinds.lua; needs python3-evdev)
 symlink "$FEDORA_DIR/.local/bin/rapidfire-daemon"      "$HOME/.local/bin/rapidfire-daemon"
 chmod +x "$FEDORA_DIR/.local/bin/rapidfire-daemon"
 symlink "$FEDORA_DIR/.local/bin/rapidfire-toggle"      "$HOME/.local/bin/rapidfire-toggle"

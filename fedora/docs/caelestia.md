@@ -27,7 +27,7 @@ A Material Design 3 / Material You Hyprland desktop rice consisting of:
 |---|---|
 | `scripts/install_caelestia.sh` | Full Fedora port install script — builds everything from source |
 | `.config/caelestia/shell.json` | caelestia-shell config — `excludedScreens` empty, bar on both monitors |
-| `.config/hypr/hyprland.conf` | Replaced waybar/mako with caelestia-shell; added QML_IMPORT_PATH env |
+| `.config/hypr/hyprland.lua` + `hyprland/*.lua` | Lua config (Hyprland ≥ 0.55): caelestia-shell autostart, QML_IMPORT_PATH env |
 | `deploy.sh` | Added caelestia shell.json symlink; commented out waybar/mako symlinks |
 
 ---
@@ -46,7 +46,7 @@ Optional flags:
 
 The script is **idempotent** — safe to re-run; already-completed steps are skipped.
 
-After install, **restart Hyprland**. caelestia-shell autostarts via hyprland.conf.
+After install, **restart Hyprland**. caelestia-shell autostarts via `hyprland/execs.lua`.
 
 ---
 
@@ -60,7 +60,7 @@ After install, **restart Hyprland**. caelestia-shell autostarts via hyprland.con
 Connector names are deliberately **not** listed here, because they are not stable —
 they shift when the GPU changes or the DisplayPort cables are reseated. The ASUS
 has been `DP-2` and `DP-1`; the Gigabyte has been `DP-3`, `DP-1`, and `DP-2`.
-`hyprland.conf` pins monitors by EDID `desc:` and `hyperhdr-picker` resolves by
+`hyprland.lua` pins monitors by EDID `desc:` and `hyperhdr-picker` resolves by
 EDID model at runtime, so neither needs updating when this happens.
 
 `excludedScreens` is the one place that still takes a raw connector name — the bar
@@ -119,10 +119,10 @@ Built with `-DCMAKE_INSTALL_PREFIX=/usr/local -DINSTALL_QMLDIR=/usr/local/lib64/
 - Binary: `/usr/local/bin/qs`
 - QML modules: `/usr/local/lib64/qt6/qml/`
 
-Fedora's Qt6 installation uses `/usr/lib64/qt6/` (not `/usr/lib/qt6/`), so `QML_IMPORT_PATH` must be set to tell Qt where to look. This is set in `hyprland.conf`:
+Fedora's Qt6 installation uses `/usr/lib64/qt6/` (not `/usr/lib/qt6/`), so `QML_IMPORT_PATH` must be set to tell Qt where to look. This is set in `hypr/hyprland/env.lua`:
 
-```ini
-env = QML_IMPORT_PATH,/usr/local/lib64/qt6/qml
+```lua
+hl.env("QML_IMPORT_PATH", "/usr/local/lib64/qt6/qml")
 ```
 
 ### caelestia-shell install paths on Fedora
@@ -160,7 +160,7 @@ ldconfig     → /etc/ld.so.conf.d/usr-local.conf  (registers /usr/local/lib)
 | `eza` not in Fedora 43 repos | Installed via `cargo install eza` |
 | `fuzzel-fish-completion` doesn't exist | Removed from package list |
 | `adw-gtk3` wrong package name | Renamed to `adw-gtk3-theme` |
-| `polkit-gnome` not in Fedora 43 (dropped upstream) | Removed — `hyprland.conf` already has fallback path `/usr/libexec/polkit-gnome-authentication-agent-1` |
+| `polkit-gnome` not in Fedora 43 (dropped upstream) | Removed — the autostart in `hyprland/execs.lua` already has fallback path `/usr/libexec/polkit-gnome-authentication-agent-1` |
 
 ### quickshell build (CMake) failures
 
@@ -195,7 +195,7 @@ ldconfig     → /etc/ld.so.conf.d/usr-local.conf  (registers /usr/local/lib)
 |---|---|
 | Black screen after Hyprland restart — `caelestia shell -d` says "Could not find caelestia config directory" | quickshell searches `~/.config/quickshell/`, but files are in `/usr/local/etc/xdg/quickshell/caelestia/`. Fix: `ln -sfn /usr/local/etc/xdg/quickshell/caelestia ~/.config/quickshell/caelestia` |
 | `module "Caelestia" is not installed` | caelestia-shell cmake stacks its hardcoded `/usr/lib/qt6/qml` on top of the `/usr/local` prefix → plugin lands in `/usr/local/usr/lib/qt6/qml/Caelestia`. Fix: `sudo ln -sfn /usr/local/usr/lib/qt6/qml/Caelestia /usr/local/lib64/qt6/qml/Caelestia` |
-| Caelestia QML module still not found even with symlink | Qt doesn't search `/usr/local/lib64/qt6/qml` by default on Fedora. Fix: set `QML_IMPORT_PATH=/usr/local/lib64/qt6/qml` at runtime and in `hyprland.conf` |
+| Caelestia QML module still not found even with symlink | Qt doesn't search `/usr/local/lib64/qt6/qml` by default on Fedora. Fix: set `QML_IMPORT_PATH=/usr/local/lib64/qt6/qml` at runtime and in `hyprland/env.lua` |
 | `libcava.so: cannot open shared object file: No such file or directory` | `/usr/local/lib` not registered with the dynamic linker. Fix: `echo '/usr/local/lib' \| sudo tee /etc/ld.so.conf.d/usr-local.conf && sudo ldconfig` |
 
 ---

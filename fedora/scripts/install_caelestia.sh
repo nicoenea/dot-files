@@ -83,7 +83,7 @@ sudo dnf install -y --skip-unavailable \
     fontconfig \
     `# GTK / icon themes` \
     papirus-icon-theme adw-gtk3-theme \
-    `# Session / auth (polkit-gnome was dropped; the exec in hyprland.conf` \
+    `# Session / auth (polkit-gnome was dropped; the autostart in hyprland/execs.lua` \
     `# already falls back to /usr/libexec/polkit-gnome-authentication-agent-1)` \
     gnome-keyring uwsm \
     `# Misc` \
