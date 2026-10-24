@@ -23,6 +23,12 @@ symlink() {
     echo "  Linked $dst -> $src"
 }
 
+# Flatpak sandboxes can't follow a symlink into ~/repos, so these get copied.
+copy() {
+    install -Dm644 "$1" "$2"
+    echo "  Copied $1 -> $2"
+}
+
 echo "Deploying fedora dotfiles from $FEDORA_DIR"
 symlink "$FEDORA_DIR/.zshrc"                          "$HOME/.zshrc"
 symlink "$FEDORA_DIR/.zprofile"                       "$HOME/.zprofile"
@@ -35,6 +41,7 @@ if [ -f "$FEDORA_DIR/.p10k.zsh" ]; then
 fi
 
 symlink "$FEDORA_DIR/.config/environment.d/gpu-wayland.conf" "$HOME/.config/environment.d/gpu-wayland.conf"
+copy "$FEDORA_DIR/.var/app/com.brave.Browser/config/brave-flags.conf" "$HOME/.var/app/com.brave.Browser/config/brave-flags.conf"
 symlink "$FEDORA_DIR/.config/fuzzel/fuzzel.ini"       "$HOME/.config/fuzzel/fuzzel.ini"
 
 echo "Deploying GTK settings (icon theme, cursor, fonts)"
