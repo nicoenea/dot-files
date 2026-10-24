@@ -61,7 +61,7 @@ sudo dnf install -y --skip-unavailable \
     qt6-qtsvg-devel qt6-qtmultimedia-devel qt6-qttranslations \
     qt6-qtshadertools-devel \
     `# Wayland / Hyprland ecosystem` \
-    hyprland xdg-desktop-portal-hyprland xdg-desktop-portal-gtk \
+    hyprland hyprland-guiutils xdg-desktop-portal-hyprland xdg-desktop-portal-gtk \
     hyprpicker wireplumber \
     `# Hardware control (power-profiles-daemon conflicts with tuned-ppd on Fedora 43;` \
     `# tuned-ppd is already installed and serves the same role)` \

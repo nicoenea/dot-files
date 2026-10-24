@@ -85,7 +85,8 @@ fi
 # Desktop stack — COPRs and packages not covered by install_caelestia.sh
 # (enable coprs BEFORE install_caelestia.sh so its hyprland install pulls the copr build)
 echo 'Enabling COPRs and installing desktop packages...'
-sudo dnf copr enable -y solopasha/hyprland     # hyprland stack: hyprland, swww, cliphist, uwsm, ...
+sudo dnf copr enable -y sdegler/hyprland       # hyprland stack: hyprland, swww, cliphist, uwsm, hyprland-guiutils
+sudo dnf copr enable -y errornointernet/quickshell  # quickshell-git (caelestia-shell needs git quickshell)
 sudo dnf copr enable -y scottames/ghostty
 sudo dnf install -y \
     ghostty \
