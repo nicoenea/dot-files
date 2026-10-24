@@ -67,6 +67,15 @@ chmod +x "$FEDORA_DIR/.local/bin/rapidfire-daemon"
 symlink "$FEDORA_DIR/.local/bin/rapidfire-toggle"      "$HOME/.local/bin/rapidfire-toggle"
 chmod +x "$FEDORA_DIR/.local/bin/rapidfire-toggle"
 
+# Login/daily update check (flatpak auto-update, dnf notify, dead-copr detector)
+echo "Deploying update-check timer"
+symlink "$FEDORA_DIR/.local/bin/update-check"          "$HOME/.local/bin/update-check"
+chmod +x "$FEDORA_DIR/.local/bin/update-check"
+symlink "$FEDORA_DIR/.config/systemd/user/update-check.service" "$HOME/.config/systemd/user/update-check.service"
+symlink "$FEDORA_DIR/.config/systemd/user/update-check.timer"   "$HOME/.config/systemd/user/update-check.timer"
+systemctl --user daemon-reload
+systemctl --user enable --now update-check.timer
+
 echo "Done."
 echo ""
 echo "NOTE: To revert GRUB to Fedora defaults (removes any custom theme), run:"

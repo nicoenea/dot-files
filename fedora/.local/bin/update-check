@@ -1,0 +1,163 @@
+#!/bin/bash
+# Login/daily update check, run by the update-check.timer systemd user unit.
+#   - flatpak: updated unattended (sandboxed, can't break the WM)
+#   - dnf:     check + notify only, never installs (needs sudo, and a
+#              Hyprland/Mesa/kernel update can break the desktop mid-session)
+#   - copr:    flags enabled coprs that are dead or stale for this Fedora release
+# One caelestia notification when there is something to act on.
+#
+# Usage: update-check [--dry-run]
+#   --dry-run  list flatpak updates instead of applying them, and print the
+#              notification text instead of sending it
+#
+# dnf notes:
+# - `--cacheonly` is NOT used: as non-root, dnf5 reads ~/.cache/libdnf5, which
+#   only refreshes when this user runs dnf, so it goes stale. Pointing cachedir
+#   at /var/cache/libdnf5 fails (non-root can't write the .solv files there).
+#   Without --cacheonly, dnf5 copies root's metadata (refreshed by
+#   dnf-makecache.timer) into the user cache when the user copy has expired,
+#   and only downloads when root's copy is stale too (dnf5-caching(7)).
+# - Every dnf call gets `timeout`, `--assumeno` and </dev/null so a repo-key
+#   import prompt ("Is this ok [y/N]") is answered "no" instead of blocking.
+
+set -uo pipefail
+
+DRY_RUN=0
+[[ "${1:-}" == "--dry-run" ]] && DRY_RUN=1
+
+LOG="${XDG_STATE_HOME:-$HOME/.local/state}/update-check.log"
+STALE_DAYS=180
+RISKY_RE='^(hyprland|hypr[a-z-]*|aquamarine|xdg-desktop-portal-hyprland|mesa-[a-z-]*|kernel(-core|-modules)?|caelestia[a-z-]*|quickshell[a-z-]*)\.'
+COPR_API="https://copr.fedorainfracloud.org/api_3/package/"
+
+mkdir -p "$(dirname "$LOG")"
+
+log() {
+    echo "$(date '+%F %T') $*" >> "$LOG"
+    (( DRY_RUN )) && echo "[log] $*" >&2
+    return 0
+}
+
+dnf() {
+    timeout "$1" dnf5 -q --assumeno "${@:2}" </dev/null
+}
+
+lines=()      # notification body lines
+urgency=normal
+
+# --- Flatpak ---------------------------------------------------------------
+if (( DRY_RUN )); then
+    pending=$(timeout 120 flatpak remote-ls --updates --columns=application </dev/null 2>&1)
+    rc=$?
+    if (( rc != 0 )); then
+        log "flatpak: remote-ls failed (exit $rc): $pending"
+        lines+=("flatpak check failed (exit $rc)")
+    else
+        log "flatpak: dry run, pending: ${pending:-none}"
+    fi
+else
+    before=$(flatpak list --columns=ref,active </dev/null 2>/dev/null)
+    out=$(timeout 900 flatpak update -y --noninteractive </dev/null 2>&1)
+    rc=$?
+    after=$(flatpak list --columns=ref,active </dev/null 2>/dev/null)
+    changed=$(comm -13 <(sort <<<"$before") <(sort <<<"$after") | cut -f1 | paste -sd' ')
+    if (( rc != 0 )); then
+        log "flatpak: update failed (exit $rc): $(tail -3 <<<"$out" | paste -sd' ')"
+        lines+=("flatpak update failed (exit $rc), see $LOG")
+    else
+        log "flatpak: updated: ${changed:-nothing}"
+    fi
+fi
+
+# --- dnf check -------------------------------------------------------------
+upgrades=$(dnf 300 check-upgrade 2>>"$LOG")
+rc=$?
+case $rc in
+    0)   log "dnf: no updates" ;;
+    100)
+        count=$(grep -cE '^[^ ]+\.[^ ]+ ' <<<"$upgrades")
+        risky=$(grep -E "$RISKY_RE" <<<"$upgrades" | awk '{sub(/\.[^.]+$/, "", $1); print $1}' | sort -u | paste -sd, | sed 's/,/, /g')
+        log "dnf: $count updates, risky: ${risky:-none}"
+        if [[ -n "$risky" ]]; then
+            lines+=("$count dnf updates — risky: $risky. Run: sudo dnf upgrade")
+            urgency=critical
+        else
+            lines+=("$count dnf updates. Run: sudo dnf upgrade")
+        fi
+        ;;
+    *)
+        log "dnf: check-upgrade failed (exit $rc)"
+        lines+=("dnf check failed (exit $rc), see $LOG")
+        ;;
+esac
+
+# --- Dead-copr detector ----------------------------------------------------
+release=$(rpm -E %fedora)
+installed=$(dnf 120 repoquery --installed --qf '%{name} %{from_repo}\n' 2>>"$LOG")
+now=$(date +%s)
+
+while read -r repo _; do
+    [[ "$repo" =~ ^copr:copr\.fedorainfracloud\.org:([^:]+):(.+)$ ]] || continue
+    owner=${BASH_REMATCH[1]} project=${BASH_REMATCH[2]}
+
+    # A failed query (timeout, network, repo won't load) must not read as "0 pkgs"
+    if ! pkglist=$(dnf 120 repoquery --repo="$repo" 2>>"$LOG"); then
+        log "copr: $owner/$project repoquery failed, skipped"
+        continue
+    fi
+    npkgs=$(grep -c . <<<"$pkglist")
+    if (( npkgs == 0 )); then
+        log "copr: $owner/$project dead (0 pkgs for f$release)"
+        lines+=("Dead copr: $owner/$project (0 pkgs for f$release) — possibly abandoned, check for a replacement")
+        urgency=critical
+        continue
+    fi
+
+    newest=0
+    for pkg in $(awk -v r="$repo" '$2 == r {print $1}' <<<"$installed"); do
+        ended=$(curl -fsS --max-time 20 -G "$COPR_API" \
+                    --data-urlencode "ownername=$owner" \
+                    --data-urlencode "projectname=$project" \
+                    --data-urlencode "packagename=$pkg" \
+                    --data-urlencode "with_latest_succeeded_build=true" 2>>"$LOG" \
+                | jq -r '.builds.latest_succeeded.ended_on // empty' 2>/dev/null)
+        if [[ -z "$ended" ]]; then
+            log "copr: API lookup failed for $owner/$project/$pkg, skipped"
+            continue
+        fi
+        (( ended > newest )) && newest=$ended
+    done
+
+    if (( newest == 0 )); then
+        log "copr: $owner/$project ok ($npkgs pkgs, no build age checked)"
+        continue
+    fi
+    age=$(( (now - newest) / 86400 ))
+    if (( age > STALE_DAYS )); then
+        log "copr: $owner/$project stale (newest build ${age}d old)"
+        lines+=("Stale copr: $owner/$project (newest build ${age}d old) — possibly abandoned, check for a replacement")
+        urgency=critical
+    else
+        log "copr: $owner/$project ok ($npkgs pkgs, newest build ${age}d old)"
+    fi
+done < <(dnf 60 repolist --enabled 2>>"$LOG")
+
+# --- Notify ----------------------------------------------------------------
+if (( ${#lines[@]} )); then
+    body=$(printf '%s\n' "${lines[@]}")
+    if (( DRY_RUN )); then
+        echo "[$urgency] Updates"
+        echo "$body"
+    else
+        notify-send -a update-check -u "$urgency" "Updates" "$body"
+    fi
+    log "notified ($urgency): $(paste -sd'|' <<<"$body")"
+else
+    (( DRY_RUN )) && echo "Nothing to report."
+    log "nothing to report"
+fi
+
+# Keep the log to the last ~500 lines
+tail -n 500 "$LOG" > "$LOG.tmp" && mv "$LOG.tmp" "$LOG"
+
+exit 0

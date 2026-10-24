@@ -1,0 +1,7 @@
+[Unit]
+Description=Flatpak auto-update, dnf update notification, dead-copr check
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/update-check
+Nice=10

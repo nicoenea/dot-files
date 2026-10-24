@@ -1,0 +1,11 @@
+[Unit]
+Description=Run update-check after login and daily
+
+[Timer]
+OnStartupSec=3min
+OnCalendar=daily
+Persistent=true
+RandomizedDelaySec=10min
+
+[Install]
+WantedBy=timers.target
