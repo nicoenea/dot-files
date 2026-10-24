@@ -54,6 +54,7 @@ Wallpapers live in `~/Pictures/Wallpapers`.
 | `Super+Shift+F` | Fullscreen (maximize, keep bar) |
 | `Super+V` | Toggle floating |
 | `Super+G` | Game mode (suppresses notifications) |
+| `Super+N` | Notification center (caelestia sidebar) |
 | `Super+Escape` / `Super+L` | Lock screen |
 | `Super+Shift+Ctrl+Q` | Exit Hyprland |
 
