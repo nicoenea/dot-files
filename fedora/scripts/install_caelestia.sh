@@ -65,7 +65,7 @@ sudo dnf install -y --skip-unavailable \
     hyprpicker wireplumber \
     `# Hardware control (power-profiles-daemon conflicts with tuned-ppd on Fedora 43;` \
     `# tuned-ppd is already installed and serves the same role)` \
-    ddcutil brightnessctl lm_sensors \
+    ddcutil brightnessctl lm_sensors lm_sensors-devel \
     `# Audio / visualisation` \
     aubio-devel pipewire-libs libqalculate-devel \
     `# libcava build deps (cava from Fedora repos has no pkg-config file)` \
@@ -224,72 +224,29 @@ else
 fi
 
 # ────────────────────────────────────────────────────────────
-# 6. quickshell  (the QML shell framework — AUR only, must build from source)
+# 6. quickshell  (quickshell-git package — caelestia-shell needs the git version)
 # ────────────────────────────────────────────────────────────
-if ! command -v qs &>/dev/null; then
-    info "Building quickshell from source (this will take a while)..."
-    QS_DIR="$BUILD_DIR/quickshell"
-    git clone --depth=1 --recurse-submodules \
-        https://github.com/quickshell-mirror/quickshell.git "$QS_DIR" 2>/dev/null || \
-        git -C "$QS_DIR" pull
-    rm -rf "$QS_DIR/build"
-    cmake -B "$QS_DIR/build" "$QS_DIR" \
-        -GNinja \
-        -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-        -DCMAKE_INSTALL_PREFIX=/usr/local \
-        -DINSTALL_QMLDIR=/usr/local/lib64/qt6/qml \
-        -DCRASH_HANDLER=OFF
-    ninja -C "$QS_DIR/build"
-    sudo ninja -C "$QS_DIR/build" install
-    success "quickshell installed"
+if ! rpm -q quickshell-git &>/dev/null; then
+    info "Installing quickshell-git..."
+    sudo dnf copr enable -y errornointernet/quickshell
+    sudo dnf install -y quickshell-git
+    success "quickshell-git installed"
 else
-    skip "quickshell (qs already in PATH)"
+    skip "quickshell-git"
 fi
 
 # ────────────────────────────────────────────────────────────
-# 6. caelestia-cli  (Python package — pip install from source)
+# 7. caelestia-shell + caelestia-cli + m3shapes  (pinned release tags)
 # ────────────────────────────────────────────────────────────
-if ! command -v caelestia &>/dev/null; then
-    info "Installing caelestia-cli..."
-    CLI_DIR="$BUILD_DIR/caelestia-cli"
-    git clone --depth=1 https://github.com/caelestia-dots/cli.git "$CLI_DIR" 2>/dev/null || \
-        git -C "$CLI_DIR" pull
-    pip install --user "$CLI_DIR"
-    # Ensure ~/.local/bin is in PATH for this session
+# update-caelestia is the single build path; re-run it by hand to rebuild or upgrade.
+if [ ! -f "$HOME/.local/state/caelestia-versions" ]; then
+    info "Building caelestia-shell, caelestia-cli and m3shapes (this will take a while)..."
+    "$SCRIPT_DIR/../.local/bin/update-caelestia"
     export PATH="$HOME/.local/bin:$PATH"
-    success "caelestia-cli installed"
+    success "caelestia installed ($(tr '\n' ' ' < "$HOME/.local/state/caelestia-versions"))"
 else
-    skip "caelestia-cli"
+    skip "caelestia (installed — run update-caelestia to rebuild)"
 fi
-
-# ────────────────────────────────────────────────────────────
-# 7. caelestia-shell  (C++/QML — must build from source)
-# ────────────────────────────────────────────────────────────
-if ! command -v caelestia-shell &>/dev/null && ! [ -f /usr/local/lib/quickshell/caelestia/shell.qml ]; then
-    info "Building caelestia-shell from source (this will take a while)..."
-    SHELL_DIR="$BUILD_DIR/caelestia-shell"
-    git clone --depth=1 https://github.com/caelestia-dots/shell.git "$SHELL_DIR" 2>/dev/null || \
-        git -C "$SHELL_DIR" pull
-    cmake -B "$SHELL_DIR/build" "$SHELL_DIR" \
-        -GNinja \
-        -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-        -DCMAKE_INSTALL_PREFIX=/usr/local \
-        -DVERSION=0.1.0
-    ninja -C "$SHELL_DIR/build"
-    sudo ninja -C "$SHELL_DIR/build" install
-    # quickshell looks in ~/.config/quickshell/ — symlink the installed config there
-    mkdir -p "$HOME/.config/quickshell"
-    ln -sfn /usr/local/etc/xdg/quickshell/caelestia "$HOME/.config/quickshell/caelestia"
-    # Fix doubled install path: caelestia cmake stacks /usr/lib/qt6/qml onto our prefix
-    sudo ln -sfn /usr/local/usr/lib/qt6/qml/Caelestia /usr/local/lib64/qt6/qml/Caelestia
-    success "caelestia-shell installed"
-else
-    skip "caelestia-shell"
-fi
-
-# Ensure the quickshell symlink exists even if caelestia-shell was already built
-mkdir -p "$HOME/.config/quickshell"
-ln -sfn /usr/local/etc/xdg/quickshell/caelestia "$HOME/.config/quickshell/caelestia"
 
 # ────────────────────────────────────────────────────────────
 # 8. caelestia dotfiles  (configs for btop, fastfetch, fish, foot, etc.)

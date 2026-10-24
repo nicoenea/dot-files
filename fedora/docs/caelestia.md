@@ -13,7 +13,8 @@ A Material Design 3 / Material You Hyprland desktop rice consisting of:
 |---|---|---|
 | **caelestia-shell** | C++/QML desktop shell (bar, notifications, OSD, launcher, lock screen) | Waybar + Mako |
 | **caelestia-cli** | Python control tool — theming, wallpaper, color scheme generation | – |
-| **quickshell** | QML shell framework that caelestia-shell runs on top of | – |
+| **quickshell** | QML shell framework that caelestia-shell runs on top of (`quickshell-git` package, copr `errornointernet/quickshell`) | – |
+| **m3shapes** | QML module (Material 3 shapes) the shell imports; commit pinned by the shell's `flake.nix` | – |
 | **caelestia dotfiles** | Configs for btop, fastfetch, fish, starship, micro, uwsm | – |
 
 **Shell stays Zsh.** Fish is installed only because caelestia-cli's theming scripts require it.
@@ -25,7 +26,8 @@ A Material Design 3 / Material You Hyprland desktop rice consisting of:
 
 | File | What changed |
 |---|---|
-| `scripts/install_caelestia.sh` | Full Fedora port install script — builds everything from source |
+| `scripts/install_caelestia.sh` | Full Fedora port install script — packages, fonts, libcava, then `update-caelestia` |
+| `.local/bin/update-caelestia` | Builds shell/cli/m3shapes at pinned tags into `/usr/local`; `--check` compares with the latest releases |
 | `.config/caelestia/shell.json` | caelestia-shell config — `excludedScreens` empty, bar on both monitors |
 | `.config/hypr/hyprland.lua` + `hyprland/*.lua` | Lua config (Hyprland ≥ 0.55): caelestia-shell autostart, QML_IMPORT_PATH env |
 | `deploy.sh` | Added caelestia shell.json symlink; commented out waybar/mako symlinks |
@@ -112,29 +114,46 @@ Full bar config with all defaults is at `/usr/local/etc/xdg/quickshell/caelestia
 
 ## Architecture: why things live where they do
 
-### Quickshell install paths on Fedora
+### Quickshell
 
-Built with `-DCMAKE_INSTALL_PREFIX=/usr/local -DINSTALL_QMLDIR=/usr/local/lib64/qt6/qml`.
+`quickshell-git` from copr `errornointernet/quickshell` (the shell requires git quickshell,
+not the tagged release): binary `/usr/bin/qs`, QML modules under `/usr/lib64/qt6/qml/`.
+It updates with `sudo dnf upgrade`.
 
-- Binary: `/usr/local/bin/qs`
-- QML modules: `/usr/local/lib64/qt6/qml/`
+### caelestia-shell / m3shapes install paths on Fedora
 
-Fedora's Qt6 installation uses `/usr/lib64/qt6/` (not `/usr/lib/qt6/`), so `QML_IMPORT_PATH` must be set to tell Qt where to look. This is set in `hypr/hyprland/env.lua`:
+Built by `update-caelestia` with `-DCMAKE_INSTALL_PREFIX=/usr/local -DINSTALL_QMLDIR=lib64/qt6/qml
+-DINSTALL_LIBDIR=lib64/caelestia`. Both projects default to `usr/lib/...` relative to the prefix,
+which used to produce a doubled `/usr/local/usr/lib/...` path (and a symlink hack to cover it).
+
+- QML config: `/usr/local/etc/xdg/quickshell/caelestia/`
+- QML plugins: `/usr/local/lib64/qt6/qml/Caelestia`, `/usr/local/lib64/qt6/qml/M3Shapes`
+- Version helper: `/usr/local/lib64/caelestia/version`
+
+Qt and the shell only look under `/usr` by default, so `hypr/hyprland/env.lua` sets:
 
 ```lua
 hl.env("QML_IMPORT_PATH", "/usr/local/lib64/qt6/qml")
+hl.env("CAELESTIA_LIB_DIR", "/usr/local/lib64/caelestia")
 ```
 
-### caelestia-shell install paths on Fedora
+quickshell only searches `~/.config/quickshell/`, so `update-caelestia` links
+`~/.config/quickshell/caelestia` → `/usr/local/etc/xdg/quickshell/caelestia`.
 
-Built with `-DCMAKE_INSTALL_PREFIX=/usr/local`.
+### Pinned versions (held for Qt 6.11)
 
-- QML config: `/usr/local/etc/xdg/quickshell/caelestia/`
-- Caelestia QML plugin: `/usr/local/usr/lib/qt6/qml/Caelestia` ← doubled path (see bugs below)
+`update-caelestia` pins **shell v2.0.2** with the cli commit its `flake.lock` pins (`d1c8c8f`).
+Newer shells don't load on Fedora 43's Qt 6.10: v2.0.3+ has `id: char` in
+`modules/lock/center/InputField.qml`, which Qt 6.10's QML parser rejects as a reserved word,
+and v2.2.0+ uses `DoubleSpinBox` (new in Qt 6.11). Fedora 44 ships Qt 6.11. When bumping, take
+the cli rev from the new shell tag's `flake.lock`.
 
-Two symlinks are created during install:
-1. `~/.config/quickshell/caelestia` → `/usr/local/etc/xdg/quickshell/caelestia` (quickshell only searches `~/.config/quickshell/`)
-2. `/usr/local/lib64/qt6/qml/Caelestia` → `/usr/local/usr/lib/qt6/qml/Caelestia` (fixes doubled path)
+### Hyprland Lua config caveats
+
+Hyprland ≥ 0.55 with a Lua config rejects `hyprctl keyword` ("keyword can't work with non-legacy
+parsers"). caelestia v2.0.2 uses it in two places: the Caps/Num Lock refresh binds (now declared
+in `hyprland/keybinds.lua`) and game mode's Hyprland tweaks (animations/blur/gaps off), which
+currently don't apply.
 
 ### libcava on Fedora
 
@@ -194,7 +213,7 @@ ldconfig     → /etc/ld.so.conf.d/usr-local.conf  (registers /usr/local/lib)
 | Error | Fix |
 |---|---|
 | Black screen after Hyprland restart — `caelestia shell -d` says "Could not find caelestia config directory" | quickshell searches `~/.config/quickshell/`, but files are in `/usr/local/etc/xdg/quickshell/caelestia/`. Fix: `ln -sfn /usr/local/etc/xdg/quickshell/caelestia ~/.config/quickshell/caelestia` |
-| `module "Caelestia" is not installed` | caelestia-shell cmake stacks its hardcoded `/usr/lib/qt6/qml` on top of the `/usr/local` prefix → plugin lands in `/usr/local/usr/lib/qt6/qml/Caelestia`. Fix: `sudo ln -sfn /usr/local/usr/lib/qt6/qml/Caelestia /usr/local/lib64/qt6/qml/Caelestia` |
+| `module "Caelestia" is not installed` | caelestia-shell cmake stacks its hardcoded `/usr/lib/qt6/qml` on top of the `/usr/local` prefix → plugin lands in `/usr/local/usr/lib/qt6/qml/Caelestia`. Fix: `update-caelestia` passes `-DINSTALL_QMLDIR=lib64/qt6/qml -DINSTALL_LIBDIR=lib64/caelestia` (the old symlink must be gone before installing, or the install writes through it) |
 | Caelestia QML module still not found even with symlink | Qt doesn't search `/usr/local/lib64/qt6/qml` by default on Fedora. Fix: set `QML_IMPORT_PATH=/usr/local/lib64/qt6/qml` at runtime and in `hyprland/env.lua` |
 | `libcava.so: cannot open shared object file: No such file or directory` | `/usr/local/lib` not registered with the dynamic linker. Fix: `echo '/usr/local/lib' \| sudo tee /etc/ld.so.conf.d/usr-local.conf && sudo ldconfig` |
 
@@ -202,19 +221,18 @@ ldconfig     → /etc/ld.so.conf.d/usr-local.conf  (registers /usr/local/lib)
 
 ## Rebuilding after upstream updates
 
-To rebuild any component, delete its build sentinel and re-run the script:
+```bash
+sudo dnf upgrade            # Hyprland (sdegler copr) and quickshell-git (errornointernet copr)
+update-caelestia --check    # installed vs latest caelestia-shell / caelestia-cli releases
+update-caelestia            # rebuild + reinstall at the pinned tags (asks for sudo), restarts the shell
+```
+
+`update-check` (daily timer) flags dnf updates and new caelestia releases. To upgrade the shell,
+bump `SHELL_TAG`/`CLI_TAG` in `.local/bin/update-caelestia`, commit, and run it.
+
+To rebuild libcava:
 
 ```bash
-# Rebuild quickshell
-rm -rf ~/.local/src/quickshell/build
-sudo rm -f /usr/local/bin/qs
-./scripts/install_caelestia.sh
-
-# Rebuild caelestia-shell
-rm -rf ~/.local/src/caelestia-shell/build
-./scripts/install_caelestia.sh
-
-# Rebuild libcava
 sudo rm -f /usr/local/lib/libcava.so
 sudo rm -f /usr/lib64/pkgconfig/cava.pc
 ./scripts/install_caelestia.sh

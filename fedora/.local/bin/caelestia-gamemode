@@ -8,14 +8,19 @@ SHELL_JSON="$HOME/.config/caelestia/shell.json"
 STATE="/tmp/caelestia-gamemode"
 CAELESTIA="$HOME/.local/bin/caelestia"
 
+# Write through the symlink into the repo copy; `mv` would replace the symlink itself.
+set_json() {
+    local tmp
+    tmp=$(mktemp) && jq "$1" "$SHELL_JSON" > "$tmp" && cat "$tmp" > "$SHELL_JSON"
+    rm -f "$tmp"
+}
+
 if [ -f "$STATE" ]; then
     rm "$STATE"
     $CAELESTIA shell gameMode disable
-    jq '.bar.persistent = true | .border.rounding = 25' \
-        "$SHELL_JSON" > /tmp/_shell.json && mv /tmp/_shell.json "$SHELL_JSON"
+    set_json '.bar.persistent = true | .border.rounding = 25'
 else
     touch "$STATE"
     $CAELESTIA shell gameMode enable
-    jq '.bar.persistent = false | .border.rounding = 0' \
-        "$SHELL_JSON" > /tmp/_shell.json && mv /tmp/_shell.json "$SHELL_JSON"
+    set_json '.bar.persistent = false | .border.rounding = 0'
 fi

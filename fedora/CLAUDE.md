@@ -98,7 +98,7 @@ Wallpapers live in `~/Pictures/Wallpapers`.
 
 ## Dotfile Management
 **Script:** `deploy.sh` — symlinks all configs into `$HOME`. Run as regular user.
-**Install caelestia:** `scripts/install_caelestia.sh` — builds quickshell + caelestia-shell from source on Fedora.
+**Install caelestia:** `scripts/install_caelestia.sh` — packages (incl. `quickshell-git` from copr `errornointernet/quickshell`), fonts, libcava, then `.local/bin/update-caelestia`, which builds caelestia-shell/cli/m3shapes at pinned tags into `/usr/local` (shell held at v2.0.2 until Qt 6.11 — see `docs/caelestia.md`). Rebuild/upgrade with `update-caelestia`; `update-caelestia --check` compares with upstream releases.
 **Other scripts:** in `scripts/` — `startup_script.sh` (fresh-install bootstrap), `gaming_setup.sh` (kept separate from main setup), `grub_setup.sh` (revert GRUB to defaults).
 **Update check:** `.local/bin/update-check`, run by the `update-check.timer` systemd user unit (3 min after login + daily). It auto-updates flatpaks and sends one notification when dnf has updates (flagging Hyprland/Mesa/kernel/caelestia ones) or an enabled copr is dead/stale for this release. It **never installs dnf packages**: `sudo dnf upgrade` stays manual.
 Log: `~/.local/state/update-check.log`. Run by hand with `update-check --dry-run` (prints instead of notifying, doesn't apply flatpak updates).

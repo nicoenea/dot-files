@@ -94,6 +94,12 @@ hl.bind("XF86AudioPrev",         exec("playerctl previous"))
 hl.bind("XF86MonBrightnessUp",   exec("brightnessctl set 5%+"))
 hl.bind("XF86MonBrightnessDown", exec("brightnessctl set 5%-"))
 
+-- caelestia-shell refreshes its Caps/Num Lock indicator on these. It registers them via
+-- `hyprctl keyword`, which the Lua config ignores, so declare them here.
+for _, key in ipairs({ "Caps_Lock", "Num_Lock" }) do
+    hl.bind(key, hl.dsp.global("caelestia:refreshDevices"), { locked = true, non_consuming = true, ignore_mods = true })
+end
+
 -- Lock screen
 hl.bind(mod .. " + Escape", exec("caelestia shell lock lock"))
 hl.bind(mod .. " + L",      exec("caelestia shell lock lock"))

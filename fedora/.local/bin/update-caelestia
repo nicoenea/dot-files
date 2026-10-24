@@ -1,0 +1,147 @@
+#!/usr/bin/env bash
+# update-caelestia — build caelestia-shell, caelestia-cli and m3shapes at pinned
+# release tags and install them into /usr/local. quickshell itself comes from the
+# quickshell-git package (copr errornointernet/quickshell), not from here.
+#
+#   update-caelestia           build as you, then install with sudo (run it in a terminal)
+#   update-caelestia --check   print installed -> latest release for shell and cli
+#
+# To upgrade: bump SHELL_TAG / CLI_TAG below (update-check flags new releases), commit, run.
+# The m3shapes commit is read from the shell's flake.nix, so it always matches SHELL_TAG.
+set -euo pipefail
+
+# Held at v2.0.2 until Qt 6.11 (Fedora 44; Fedora 43 ships 6.10): v2.0.3+ has an
+# `id: char` that Qt 6.10's QML parser rejects, and v2.2.0+ uses DoubleSpinBox (Qt 6.11).
+# CLI_TAG is the cli rev that shell's flake.lock pins for SHELL_TAG (v1.0.8 + 15
+# commits, untagged) — use that pairing again when bumping.
+SHELL_TAG=v2.0.2
+CLI_TAG=d1c8c8fc09738d1b40576e97c274b4a11a2e0ac7
+
+SRC="$HOME/.local/src"
+STATE_DIR="$HOME/.local/state"
+VERSIONS="$STATE_DIR/caelestia-versions"
+PREFIX=/usr/local
+# Fedora's Qt looks in lib64; neither project defaults to that under a custom prefix
+# (m3shapes and older shell tags default to usr/lib/..., giving /usr/local/usr/lib/...).
+QMLDIR=lib64/qt6/qml
+# Must match hypr/hyprland/env.lua (QML_IMPORT_PATH, CAELESTIA_LIB_DIR).
+export QML_IMPORT_PATH="$PREFIX/$QMLDIR"
+export CAELESTIA_LIB_DIR="$PREFIX/lib64/caelestia"
+
+info() { printf '\033[1;34m==>\033[0m %s\n' "$*"; }
+
+installed_version() { # name -> version from the state file, or "none"
+    [ -f "$VERSIONS" ] || { echo none; return; }
+    awk -v n="$1" '$1 == n { print $2; found=1 } END { if (!found) print "none" }' "$VERSIONS"
+}
+
+latest_release() { # repo -> tag of the latest GitHub release (unauthenticated API)
+    curl -fsS --max-time 10 "https://api.github.com/repos/caelestia-dots/$1/releases/latest" \
+        | python3 -c 'import json, sys; print(json.load(sys.stdin)["tag_name"])'
+}
+
+if [ "${1:-}" = "--check" ]; then
+    for pair in shell:caelestia-shell cli:caelestia-cli; do
+        repo=${pair%%:*} name=${pair#*:}
+        have=$(installed_version "$name")
+        latest=$(latest_release "$repo") || { echo "$name: could not reach GitHub API" >&2; exit 1; }
+        if [ "$have" = "$latest" ]; then
+            echo "$name $have -> $latest (up to date)"
+        else
+            echo "$name $have -> $latest (update available)"
+        fi
+    done
+    exit 0
+fi
+
+checkout() { # dir url ref
+    if [ ! -d "$1/.git" ]; then
+        git clone --quiet "$2" "$1"
+    fi
+    git -C "$1" fetch --quiet --tags origin
+    git -C "$1" -c advice.detachedHead=false checkout --quiet "$3"
+}
+
+# The previous install's manifest lives in the state dir, because each build starts
+# from a clean build/ directory. Seed it once from an older in-tree build.
+manifest_for() { echo "$STATE_DIR/caelestia-$1.manifest"; }
+seed_manifest() { # name dir
+    local m; m=$(manifest_for "$1")
+    if [ ! -f "$m" ] && [ -f "$2/build/install_manifest.txt" ]; then
+        cp "$2/build/install_manifest.txt" "$m"
+    fi
+}
+
+cmake_build() { # dir [extra cmake args...]
+    local dir=$1; shift
+    rm -rf "$dir/build"
+    cmake -S "$dir" -B "$dir/build" -G Ninja \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX="$PREFIX" \
+        "$@"
+    cmake --build "$dir/build"
+}
+
+mkdir -p "$SRC" "$STATE_DIR"
+
+# ── Build (as you) ──────────────────────────────────────────
+info "caelestia-shell $SHELL_TAG"
+SHELL_DIR="$SRC/caelestia-shell"
+checkout "$SHELL_DIR" https://github.com/caelestia-dots/shell.git "$SHELL_TAG"
+M3_REV=$(grep -oP 'github:soramanew/m3shapes/\K[0-9a-f]{40}' "$SHELL_DIR/flake.nix")
+
+info "m3shapes $M3_REV"
+M3_DIR="$SRC/m3shapes"
+checkout "$M3_DIR" https://github.com/soramanew/m3shapes.git "$M3_REV"
+seed_manifest m3shapes "$M3_DIR"
+cmake_build "$M3_DIR" -DINSTALL_QMLDIR="$QMLDIR"
+
+seed_manifest shell "$SHELL_DIR"
+cmake_build "$SHELL_DIR" -DINSTALL_QMLDIR="$QMLDIR" -DINSTALL_LIBDIR=lib64/caelestia \
+    -DDISTRIBUTOR="dot-files (Fedora)"
+
+info "caelestia-cli $CLI_TAG"
+CLI_DIR="$SRC/caelestia-cli"
+checkout "$CLI_DIR" https://github.com/caelestia-dots/cli.git "$CLI_TAG"
+
+# ── Install (sudo) ──────────────────────────────────────────
+if [ ! -t 0 ] && ! sudo -n true 2>/dev/null; then
+    echo "Builds done. Installing needs sudo — run update-caelestia in a terminal." >&2
+    exit 1
+fi
+
+# Leftovers from the pre-update-caelestia layout, cleared BEFORE installing: the old
+# lib64/qt6/qml/Caelestia symlink pointed into the doubled /usr/local/usr/lib path, and
+# an install through it lands there instead. Empty Quickshell/ dirs are from the old
+# quickshell source build (now the quickshell-git package).
+if [ -L "$PREFIX/$QMLDIR/Caelestia" ]; then sudo rm "$PREFIX/$QMLDIR/Caelestia"; fi
+if [ -d "$PREFIX/usr/lib/qt6/qml/Caelestia" ]; then sudo rm -rf "$PREFIX/usr/lib/qt6/qml/Caelestia"; fi
+if [ -d "$PREFIX/$QMLDIR/Quickshell" ]; then sudo find "$PREFIX/$QMLDIR/Quickshell" -depth -type d -empty -delete; fi
+
+for name in m3shapes shell; do
+    dir=$M3_DIR; [ "$name" = shell ] && dir=$SHELL_DIR
+    old=$(manifest_for "$name")
+    if [ -f "$old" ]; then
+        info "Removing previous $name install"
+        sudo xargs -a "$old" -d '\n' rm -f --
+    fi
+    info "Installing $name"
+    sudo cmake --install "$dir/build"
+    cp "$dir/build/install_manifest.txt" "$old"
+done
+if [ -d "$PREFIX/usr" ]; then sudo find "$PREFIX/usr" -depth -type d -empty -delete; fi
+# quickshell looks in ~/.config/quickshell/, not /usr/local/etc/xdg — link the installed config there.
+mkdir -p "$HOME/.config/quickshell"
+ln -sfn "$PREFIX/etc/xdg/quickshell/caelestia" "$HOME/.config/quickshell/caelestia"
+
+info "Installing caelestia-cli (pip --user)"
+pip install --user --quiet --upgrade "$CLI_DIR"
+
+printf 'caelestia-shell %s\ncaelestia-cli %s\nm3shapes %s\n' "$SHELL_TAG" "$CLI_TAG" "$M3_REV" > "$VERSIONS"
+
+info "Restarting caelestia shell"
+qs -c caelestia kill 2>/dev/null || true
+# Instances started by a different quickshell build aren't seen by `qs kill`.
+pkill -f '^qs -c caelestia' 2>/dev/null && sleep 0.5 || true
+"$HOME/.local/bin/caelestia" shell -d
+info "Done: $(tr '\n' ' ' < "$VERSIONS")"
