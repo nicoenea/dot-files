@@ -7,3 +7,5 @@ fedora/docs/lights_setup.md
 fedora/docs/remote_trip_*.md
 # Claude Code machine-local settings
 fedora/.claude/settings.local.json
+# Python bytecode (rapidfire-daemon is imported from ~/.local/bin)
+__pycache__/
