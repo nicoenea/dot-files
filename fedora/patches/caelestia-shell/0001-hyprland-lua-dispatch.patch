@@ -1,0 +1,280 @@
+From 7f358235aab727289c50f7e69b96ae7237efc358 Mon Sep 17 00:00:00 2001
+From: ilyas <67807483+Mestane@users.noreply.github.com>
+Date: Sun, 14 Jun 2026 14:51:35 +0300
+Subject: [PATCH] feat: add Hyprland lua conf support (#1553)
+
+* changing dispatchers
+
+* gating dispatchers for non-lua config
+
+* refractoring?
+
+* fix: added usingLua property to HyprExtras for Lua config detection #1478
+
+* refactor(internal): pass usingLua from QML instead of detecting in C++
+
+* fix(workspaces): resolve undefined workspace id in Lua dispatch
+
+* fix(workspaces): guard against undefined workspace and fix Lua dispatch
+
+* fix: use Lua syntax in applyOptions when usingLua is set
+
+* refactor(hypr): use local usingLua over Hyprland.usingLua
+
+* chore: format
+
+* fix: only change action if it is dpms on/off
+
+* more fixes
+
+* fix: lua dispatcher syntax fail
+
+thank you karin
+
+---------
+
+Co-authored-by: sufficientpast <252132621+sufficientpast@users.noreply.github.com>
+Co-authored-by: 2 * r + 2 * t <61896496+soramanew@users.noreply.github.com>
+---
+ modules/IdleMonitors.qml                          |  2 +-
+ modules/bar/Bar.qml                               |  4 ++--
+ .../components/workspaces/SpecialWorkspaces.qml   |  4 ++--
+ modules/bar/components/workspaces/Workspaces.qml  |  6 ++++--
+ modules/windowinfo/Buttons.qml                    |  8 ++++----
+ plugin/src/Caelestia/Internal/hyprextras.cpp      |  9 ++++++++-
+ plugin/src/Caelestia/Internal/hyprextras.hpp      |  3 +++
+ services/Colours.qml                              |  9 +++++++--
+ services/Hypr.qml                                 | 15 +++++++++++----
+ 9 files changed, 42 insertions(+), 18 deletions(-)
+
+diff --git a/modules/IdleMonitors.qml b/modules/IdleMonitors.qml
+index 417b0e8a..2ac49fca 100644
+--- a/modules/IdleMonitors.qml
++++ b/modules/IdleMonitors.qml
+@@ -22,7 +22,7 @@ Scope {
+         else if (action === "unlock")
+             lock.lock.locked = false;
+         else if (typeof action === "string")
+-            Hypr.dispatch(action);
++            Hypr.dispatch(Hypr.usingLua && ["dpms off", "dpms on"].includes(action) ? `hl.dsp.dpms({ action = "${action === "dpms off" ? "disable" : "enable"}" })` : action);
+         else
+             Quickshell.execDetached(action);
+     }
+diff --git a/modules/bar/Bar.qml b/modules/bar/Bar.qml
+index db648a9c..e0f17c01 100644
+--- a/modules/bar/Bar.qml
++++ b/modules/bar/Bar.qml
+@@ -83,9 +83,9 @@ ColumnLayout {
+             const mon = (GlobalConfig.bar.workspaces.perMonitorWorkspaces ? Hypr.monitorFor(screen) : Hypr.focusedMonitor);
+             const specialWs = mon?.lastIpcObject.specialWorkspace.name;
+             if (specialWs?.length > 0)
+-                Hypr.dispatch(`togglespecialworkspace ${specialWs.slice(8)}`);
++                Hypr.dispatch(Hypr.usingLua ? `hl.dsp.workspace.toggle_special("${specialWs.slice(8)}")` : `togglespecialworkspace ${specialWs.slice(8)}`);
+             else if (angleDelta.y < 0 || (GlobalConfig.bar.workspaces.perMonitorWorkspaces ? mon.activeWorkspace?.id : Hypr.activeWsId) > 1)
+-                Hypr.dispatch(`workspace r${angleDelta.y > 0 ? "-" : "+"}1`);
++                Hypr.dispatch(Hypr.usingLua ? `hl.dsp.focus({ workspace = "r${angleDelta.y > 0 ? "-" : "+"}1" })` : `workspace r${angleDelta.y > 0 ? "-" : "+"}1`);
+         } else if (y < screen.height / 2 && Config.bar.scrollActions.volume) {
+             // Volume scroll on top half
+             if (angleDelta.y > 0)
+diff --git a/modules/bar/components/workspaces/SpecialWorkspaces.qml b/modules/bar/components/workspaces/SpecialWorkspaces.qml
+index 70476df8..6937fb81 100644
+--- a/modules/bar/components/workspaces/SpecialWorkspaces.qml
++++ b/modules/bar/components/workspaces/SpecialWorkspaces.qml
+@@ -227,9 +227,9 @@ Item {
+ 
+             const ws = view.itemAt(event.x, event.y) as SpecialWsDelegate;
+             if (ws?.modelData)
+-                Hypr.dispatch(`togglespecialworkspace ${ws.modelData.name.slice(8)}`);
++                Hypr.dispatch(Hypr.usingLua ? `hl.dsp.workspace.toggle_special("${ws.modelData.name.slice(8)}")` : `togglespecialworkspace ${ws.modelData.name.slice(8)}`);
+             else
+-                Hypr.dispatch("togglespecialworkspace special");
++                Hypr.dispatch(Hypr.usingLua ? 'hl.dsp.workspace.toggle_special("special")' : "togglespecialworkspace special");
+         }
+     }
+ 
+diff --git a/modules/bar/components/workspaces/Workspaces.qml b/modules/bar/components/workspaces/Workspaces.qml
+index 2120aef9..75cd54d6 100644
+--- a/modules/bar/components/workspaces/Workspaces.qml
++++ b/modules/bar/components/workspaces/Workspaces.qml
+@@ -96,10 +96,12 @@ StyledClippingRect {
+             anchors.fill: layout
+             onClicked: event => {
+                 const ws = (layout.childAt(event.x, event.y) as Workspace)?.ws;
++                if (!ws)
++                    return;
+                 if (Hypr.activeWsId !== ws)
+-                    Hypr.dispatch(`workspace ${ws}`);
++                    Hypr.dispatch(Hypr.usingLua ? `hl.dsp.focus({ workspace = "${ws}" })` : `workspace ${ws}`);
+                 else
+-                    Hypr.dispatch("togglespecialworkspace special");
++                    Hypr.dispatch(Hypr.usingLua ? 'hl.dsp.workspace.toggle_special("special")' : "togglespecialworkspace special");
+             }
+         }
+ 
+diff --git a/modules/windowinfo/Buttons.qml b/modules/windowinfo/Buttons.qml
+index f56a107e..7a4fb743 100644
+--- a/modules/windowinfo/Buttons.qml
++++ b/modules/windowinfo/Buttons.qml
+@@ -95,7 +95,7 @@ ColumnLayout {
+                 readonly property bool isCurrent: root.client?.workspace.id === wsId
+ 
+                 onClicked: {
+-                    Hypr.dispatch(`movetoworkspace ${wsId},address:0x${root.client?.address}`);
++                    Hypr.dispatch(Hypr.usingLua ? `hl.dsp.window.move({ window = "address:0x${root.client?.address}", workspace = "${wsId}", follow = true })` : `movetoworkspace ${wsId},address:0x${root.client?.address}`);
+                 }
+ 
+                 color: isCurrent ? Colours.tPalette.m3surfaceContainerHighest : Colours.palette.m3tertiaryContainer
+@@ -118,7 +118,7 @@ ColumnLayout {
+             color: Colours.palette.m3secondaryContainer
+             onColor: Colours.palette.m3onSecondaryContainer
+             text: root.client?.lastIpcObject.floating ? qsTr("Tile") : qsTr("Float")
+-            onClicked: Hypr.dispatch(`togglefloating address:0x${root.client?.address}`)
++            onClicked: Hypr.dispatch(Hypr.usingLua ? `hl.dsp.window.float({ window = "address:0x${root.client?.address}" })` : `togglefloating address:0x${root.client?.address}`)
+         }
+ 
+         Loader {
+@@ -132,7 +132,7 @@ ColumnLayout {
+                 color: Colours.palette.m3secondaryContainer
+                 onColor: Colours.palette.m3onSecondaryContainer
+                 text: root.client?.lastIpcObject.pinned ? qsTr("Unpin") : qsTr("Pin")
+-                onClicked: Hypr.dispatch(`pin address:0x${root.client?.address}`)
++                onClicked: Hypr.dispatch(Hypr.usingLua ? `hl.dsp.window.pin({ window = "address:0x${root.client?.address}" })` : `pin address:0x${root.client?.address}`)
+             }
+         }
+ 
+@@ -140,7 +140,7 @@ ColumnLayout {
+             color: Colours.palette.m3errorContainer
+             onColor: Colours.palette.m3onErrorContainer
+             text: qsTr("Kill")
+-            onClicked: Hypr.dispatch(`killwindow address:0x${root.client?.address}`)
++            onClicked: Hypr.dispatch(Hypr.usingLua ? `hl.dsp.window.kill({ window = "address:0x${root.client?.address}" })` : `killwindow address:0x${root.client?.address}`)
+         }
+     }
+ 
+diff --git a/plugin/src/Caelestia/Internal/hyprextras.cpp b/plugin/src/Caelestia/Internal/hyprextras.cpp
+index c73b6e0b..3ebe234e 100644
+--- a/plugin/src/Caelestia/Internal/hyprextras.cpp
++++ b/plugin/src/Caelestia/Internal/hyprextras.cpp
+@@ -90,7 +90,14 @@ void HyprExtras::applyOptions(const QVariantHash& options) {
+     request.reserve(12 + options.size() * 40);
+     request += QLatin1String("[[BATCH]]");
+     for (auto it = options.constBegin(); it != options.constEnd(); ++it) {
+-        request += QLatin1String("keyword ") + it.key() + QLatin1Char(' ') + it.value().toString() + QLatin1Char(';');
++        if (!m_usingLua) {
++            request +=
++                QLatin1String("keyword ") + it.key() + QLatin1Char(' ') + it.value().toString() + QLatin1Char(';');
++        } else {
++            auto parts = it.key().split(':');
++            request += "eval hl.config({ " + parts.join(" = { ") + " = " + it.value().toString() +
++                       QString(" }").repeated(parts.size() - 1) + " });";
++        }
+     }
+ 
+     makeRequest(request, [this](bool success, const QByteArray& res) {
+diff --git a/plugin/src/Caelestia/Internal/hyprextras.hpp b/plugin/src/Caelestia/Internal/hyprextras.hpp
+index 48eceea9..3e0757ad 100644
+--- a/plugin/src/Caelestia/Internal/hyprextras.hpp
++++ b/plugin/src/Caelestia/Internal/hyprextras.hpp
+@@ -17,6 +17,7 @@ class HyprExtras : public QObject {
+ 
+     Q_PROPERTY(QVariantHash options READ options NOTIFY optionsChanged)
+     Q_PROPERTY(caelestia::internal::hypr::HyprDevices* devices READ devices CONSTANT)
++    Q_PROPERTY(bool usingLua MEMBER m_usingLua NOTIFY usingLuaChanged)
+ 
+ public:
+     explicit HyprExtras(QObject* parent = nullptr);
+@@ -33,6 +34,7 @@ public:
+ 
+ signals:
+     void optionsChanged();
++    void usingLuaChanged();
+ 
+ private:
+     using SocketPtr = QSharedPointer<QLocalSocket>;
+@@ -41,6 +43,7 @@ private:
+     QString m_eventSocket;
+     QLocalSocket* m_socket;
+     bool m_socketValid;
++    bool m_usingLua = false;
+ 
+     QVariantHash m_options;
+     HyprDevices* const m_devices;
+diff --git a/services/Colours.qml b/services/Colours.qml
+index 301f2e7f..1ba56d5e 100644
+--- a/services/Colours.qml
++++ b/services/Colours.qml
+@@ -83,8 +83,13 @@ Singleton {
+     }
+ 
+     function reloadHyprRules(): void {
+-        const str = "keyword layerrule %1 %2, match:namespace caelestia-drawers";
+-        Hypr.extras.batchMessage([str.arg("blur").arg(transparency.enabled ? 1 : 0), str.arg("ignore_alpha").arg(transparency.base - 0.03)]);
++        if (Hypr.usingLua) {
++            const rule = `eval hl.layer_rule({ match = { namespace = "caelestia-drawers" }, %1 })`;
++            Hypr.extras.batchMessage([rule.arg(`blur = ${transparency.enabled}`), rule.arg(`ignore_alpha = ${transparency.base - 0.03}`)]);
++        } else {
++            const str = "keyword layerrule %1 %2, match:namespace caelestia-drawers";
++            Hypr.extras.batchMessage([str.arg("blur").arg(transparency.enabled ? 1 : 0), str.arg("ignore_alpha").arg(transparency.base - 0.03)]);
++        }
+     }
+ 
+     function requestReloadHyprRules(): void {
+diff --git a/services/Hypr.qml b/services/Hypr.qml
+index 181967e7..d890f098 100644
+--- a/services/Hypr.qml
++++ b/services/Hypr.qml
+@@ -15,6 +15,7 @@ Singleton {
+     readonly property var toplevels: Hyprland.toplevels
+     readonly property var workspaces: Hyprland.workspaces
+     readonly property var monitors: Hyprland.monitors
++    readonly property bool usingLua: Hyprland.usingLua
+ 
+     readonly property HyprlandToplevel activeToplevel: {
+         const t = Hyprland.activeToplevel;
+@@ -57,11 +58,11 @@ Singleton {
+             if (lastSpecialWorkspace) {
+                 const workspace = workspaces.values.find(w => w.name === lastSpecialWorkspace);
+                 if (workspace && workspace.lastIpcObject.windows > 0) {
+-                    dispatch(`workspace ${lastSpecialWorkspace}`);
++                    dispatch(usingLua ? `hl.dsp.focus({ workspace = "${lastSpecialWorkspace}" })` : `workspace ${lastSpecialWorkspace}`);
+                     return;
+                 }
+             }
+-            dispatch(`workspace ${openSpecials[0].name}`);
++            dispatch(usingLua ? `hl.dsp.focus({ workspace = "${openSpecials[0].name}" })` : `workspace ${openSpecials[0].name}`);
+             return;
+         }
+ 
+@@ -75,7 +76,7 @@ Singleton {
+                 nextIndex = (currentIndex - 1 + openSpecials.length) % openSpecials.length;
+         }
+ 
+-        dispatch(`workspace ${openSpecials[nextIndex].name}`);
++        dispatch(usingLua ? `hl.dsp.focus({ workspace = "${openSpecials[nextIndex].name}" })` : `workspace ${openSpecials[nextIndex].name}`);
+     }
+ 
+     function monitorNames(): list<string> {
+@@ -87,7 +88,11 @@ Singleton {
+     }
+ 
+     function reloadDynamicConfs(): void {
+-        extras.batchMessage(["keyword bindlni ,Caps_Lock,global,caelestia:refreshDevices", "keyword bindlni ,Num_Lock,global,caelestia:refreshDevices"]);
++        if (usingLua) {
++            extras.batchMessage(['eval hl.bind("Caps_Lock", hl.dsp.global("caelestia:refreshDevices"), { locked = true, non_consuming = true, ignore_mods = true, release = true })', 'eval hl.bind("Num_Lock", hl.dsp.global("caelestia:refreshDevices"), { locked = true, non_consuming = true, ignore_mods = true, release = true })']);
++        } else {
++            extras.batchMessage(["keyword bindlni ,Caps_Lock,global,caelestia:refreshDevices", "keyword bindlni ,Num_Lock,global,caelestia:refreshDevices"]);
++        }
+     }
+ 
+     Component.onCompleted: reloadDynamicConfs()
+@@ -218,5 +223,7 @@ Singleton {
+ 
+     HyprExtras {
+         id: extras
++
++        usingLua: Hyprland.usingLua
+     }
+ }
+-- 
+2.56.0
+

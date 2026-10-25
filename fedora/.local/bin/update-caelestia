@@ -14,12 +14,15 @@ set -euo pipefail
 # `id: char` that Qt 6.10's QML parser rejects, and v2.2.0+ uses DoubleSpinBox (Qt 6.11).
 # CLI_TAG is the cli rev that shell's flake.lock pins for SHELL_TAG (v1.0.8 + 15
 # commits, untagged) — use that pairing again when bumping.
+# patches/caelestia-shell/*.patch are applied on top of SHELL_TAG (backports from
+# newer tags); drop any that a bump already contains.
 SHELL_TAG=v2.0.2
 CLI_TAG=d1c8c8fc09738d1b40576e97c274b4a11a2e0ac7
 
 SRC="$HOME/.local/src"
 STATE_DIR="$HOME/.local/state"
 VERSIONS="$STATE_DIR/caelestia-versions"
+PATCH_DIR="$(dirname "$(readlink -f "$0")")/../../patches/caelestia-shell"
 PREFIX=/usr/local
 # Fedora's Qt looks in lib64; neither project defaults to that under a custom prefix
 # (m3shapes and older shell tags default to usr/lib/..., giving /usr/local/usr/lib/...).
@@ -59,6 +62,7 @@ checkout() { # dir url ref
         git clone --quiet "$2" "$1"
     fi
     git -C "$1" fetch --quiet --tags origin
+    git -C "$1" reset --quiet --hard  # drop patches applied by a previous run
     git -C "$1" -c advice.detachedHead=false checkout --quiet "$3"
 }
 
@@ -88,6 +92,11 @@ mkdir -p "$SRC" "$STATE_DIR"
 info "caelestia-shell $SHELL_TAG"
 SHELL_DIR="$SRC/caelestia-shell"
 checkout "$SHELL_DIR" https://github.com/caelestia-dots/shell.git "$SHELL_TAG"
+for patch in "$PATCH_DIR"/*.patch; do
+    [ -e "$patch" ] || continue
+    info "Applying $(basename "$patch")"
+    git -C "$SHELL_DIR" apply "$patch"
+done
 M3_REV=$(grep -oP 'github:soramanew/m3shapes/\K[0-9a-f]{40}' "$SHELL_DIR/flake.nix")
 
 info "m3shapes $M3_REV"

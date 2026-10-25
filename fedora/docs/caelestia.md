@@ -148,6 +148,12 @@ Newer shells don't load on Fedora 43's Qt 6.10: v2.0.3+ has `id: char` in
 and v2.2.0+ uses `DoubleSpinBox` (new in Qt 6.11). Fedora 44 ships Qt 6.11. When bumping, take
 the cli rev from the new shell tag's `flake.lock`.
 
+Backports from newer tags live in `patches/caelestia-shell/` and are applied on top of the pin:
+`0001-hyprland-lua-dispatch.patch` is upstream #1553 (in v2.0.3). Without it, with the Lua
+Hyprland config, every shell dispatch (bar workspace scroll/click, special workspaces,
+window-info buttons) is sent in legacy syntax and Hyprland rejects it as invalid Lua.
+Drop it when bumping to v2.0.3+.
+
 ### Hyprland Lua config caveats
 
 Hyprland ≥ 0.55 with a Lua config rejects `hyprctl keyword` ("keyword can't work with non-legacy
