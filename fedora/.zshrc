@@ -152,7 +152,8 @@ export PATH="$HOME/.local/bin:$PATH"
 export PATH="$HOME/.local/bin:$PATH"
 eval "$(pyenv virtualenv-init -)"
 
-# Second Claude Code account (work) — separate config dir = separate login,
-# so both accounts stay logged in at once. Machine-level CLAUDE.md is symlinked
+# Extra Claude Code accounts (work, max) — separate config dir = separate login,
+# so all accounts stay logged in at once. Machine-level CLAUDE.md is symlinked
 # from ~/.claude so there's only one copy to maintain.
 alias claude-work='CLAUDE_CONFIG_DIR="$HOME/.claude-work" claude'
+alias claude-max='CLAUDE_CONFIG_DIR="$HOME/.claude-max" claude'
